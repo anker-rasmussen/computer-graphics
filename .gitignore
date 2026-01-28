@@ -1,0 +1,9 @@
+# Build artifacts and caches
+.cache/
+build/
+
+# Lab1Demo specific build directories
+/Labs/Lab1Demo/Demo/Debug/*
+/Labs/Lab1Demo/Demo/Release/*
+/Labs/Lab1Demo/Demo/Lab1/Debug/*
+/Labs/Lab1Demo/Demo/Lab1/Release/*
