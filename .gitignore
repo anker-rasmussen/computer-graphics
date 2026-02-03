@@ -7,3 +7,9 @@ build/
 /Labs/Lab1Demo/Demo/Release/*
 /Labs/Lab1Demo/Demo/Lab1/Debug/*
 /Labs/Lab1Demo/Demo/Lab1/Release/*
+
+# Lab2Demo specific build directories
+/Labs/Lab2Demo/Demo/Debug/*
+/Labs/Lab2Demo/Demo/Release/*
+/Labs/Lab2Demo/Demo/Lab2/Debug/*
+/Labs/Lab2Demo/Demo/Lab2/Release/*
