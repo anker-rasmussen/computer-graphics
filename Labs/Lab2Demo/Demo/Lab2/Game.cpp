@@ -129,7 +129,7 @@ void Game::Render()
 	modelMatrixStack.SetIdentity();
 
 	//stack2
-	float s = sin(m_rotY/100.0f);
+	// float s = sin(m_rotY/100.0f);
 	modelMatrixStack.Translate(5,0,0);
 	modelMatrixStack.Rotate(glm::vec3(0,1,0),m_rotY);
 	//scaling lol

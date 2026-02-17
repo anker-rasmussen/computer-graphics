@@ -203,3 +203,110 @@ The inverse of a matrix **A** is denoted by A<sup>-1</sup>.
 - Scaling
 - Rotation
 - Translation
+
+# Lecture 3
+### Viewing, VBOs, and Splines
+### Matrices, matrices, matrices! 
+Matrix inversion. Take the determinant, then do 1/ad-bc.
+
+In the case of a rotation matrix, the transpose is equal to the inverse. 
+
+In 3D as in 2D, rotations satisfy orthogonality.
+Columns or rows of *R* form an orthonormal basis
+  - Each column is a vector of length 1
+  - The three columns are orthogonal
+  - The columns define a set of axes that span
+  - Can be seen as a rotation from one coordinate system to another (source & target space)
+The inverse represents the inverrse transformation (rotation from target coordinate space back to source space)
+
+3D rotations are about an axis. Rotations about the coordinate axes 
+
+There are always at least 2 sets of angles that produce the same rotation matrix.
+
+### Viewing and the Synthetic camera model
+
+Imagine you're taking a picture with your camera.
+Objects may be best described in a local coordinate system unique to each object. 
+
+Objects have position and orientation, and so does your camera.
+
+Your camera has settings such as size, FoV, and resolution, which helps to define how the final image is rendered.
+
+The synthetic camera model mimics this process, using transformations between different coordinate systems to render an image. These transformations are implemented using matrices.
+
+Modelling matrix -> Viewing matrix -> Projection matrix
+-> Viewport Matrix
+
+World coordinates
+
+The camera is implemented using a left handed coordinate system, but all geometry is specified using a right handed coordinate system.
+
+glm::lookAt() provides a simple interface for viewing. Requires (in world coordinates) an eye point, view point, and up vector for "up" for the camera/rendered image.
+
+Produces a viewing matrix (which is used in a vertex shader) to transform points.
+
+To fly through a scene, change the eyepoint and redraw.
+
+
+Normalize the lookAt vectors!
+
+glm::perspective creates a 4x4 perspective projection matrix used in a shader to transform points.
+
+Often, one sets up the projection transformation and does not change it (unless the user changes the window)
+
+`znear` and `zfar` are distances *from* the camera. A 45 degree vertical fov is fine.
+
+Orthographic projection: Parallel lines remain parallel, and distance to camera does not affect rendering. Objects retain their size regardless of how far they are away from the camera (used in HUDs and CAD)
+
+### Viewport
+
+Specifies dimensions of the 2d window where rendering occurs. The viewport is set to the window size when the rendering context is created.
+
+One sets the viewport when changing the window size.
+
+
+Rendering a frame
+  - Clear the buffers
+    (glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);)
+  - Set the view (or modelview) matrix
+    (glm::lookAt();)
+  - Set the model (or modelview) matrix
+    glm::translate(), glm::rotate(), glm::scale()
+  - Pass matrices to shader
+  - Render object
+    glDrawArrays()
+  - Swap buffers to display rendered frame.
+
+  RGB color
+  
+  RGB is a color space. (Red, Green, Blue axes)
+
+  Values are from 0.0 to 1.0. Points can be represented as a vector
+
+  RGB uses additive color mixing, because it describes type of light emitted to produce a color. Light is added to create form.
+
+  ### Vertex attributes
+
+  A vertex may have several attributes
+  - Position
+  - Color
+  - Texture coordinate
+  - Normal
+
+  Two vertices are equivalent if and only if all their attributes are equal.
+
+### Immediate vs Retained mode. 
+(Imediate has been deprecated). Now we use VertexBufferObjects.
+
+These buffers are stored within the GPU. A buffer object is an OpenGl container used to store generic data, and a vertex butter object is one that stores vertex attributes. 
+
+VBOs store per-vertex data that is used by the vertex shader during rendering. 
+
+To use a VBO there are 3 steps
+  - Generate a name for thebuffer
+    - Bind (activate the buffer)
+    - Store data in the buffer (on the gpu!)
+  - Render using the buffer (0-n times)
+  - Destroy the buffer
+
+  

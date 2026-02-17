@@ -13,3 +13,7 @@ build/
 /Labs/Lab2Demo/Demo/Release/*
 /Labs/Lab2Demo/Demo/Lab2/Debug/*
 /Labs/Lab2Demo/Demo/Lab2/Release/*
+
+# Coursework build directories
+/Coursework/Template2026/OpenGLTemplate/Debug/*
+/Coursework/Template2026/OpenGLTemplate/Release/*
