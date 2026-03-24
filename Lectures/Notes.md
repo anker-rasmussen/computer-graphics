@@ -310,3 +310,94 @@ To use a VBO there are 3 steps
   - Destroy the buffer
 
   
+# Lecture 4
+### Shaders
+Server side computer program (lives on the GPU), produces rendering effects on graphics hardware. Implements lighting and shading, but can do much more. 
+Shaders are more flexible than the fixed function pipeline, but you can create difficult/impossible effects to produce with fixed function pipeline.
+
+Non linear spatial transformation, non-photorealistic rendering, and per-fragment lighting can be handled.
+
+Modern CPUs can do shaders! It's not exclusively running on GPUs.
+
+Shaders were originally written in ASM. Nowadays there's GLSL which allows for a high level implementation.
+
+# Lecture 5
+### Surfaces and texture mapping
+
+`Uniform` vs `In` variables
+
+Uniform are sent from the c++ to the GPU. Uniforms are visible in all shaders.
+
+Variables that are `in` are sent from another shader stage (or from the VBO).
+
+Don't load precompiled shaders (it's unlikely a shader compiled on another system will work on another due to drivers or hardware mismatch. Compile the shaders at runtime!)
+
+You can choose not to render backfaces. When outside an opaque closed surface, the backfaces are never visible as they are occluded by nearer faces. They can be culled, therefore not rendering it.
+
+Culling is enabled using `glEnable(GL_CULL_FACE);`
+
+And the side to cull is specified by an enum `glCullFace(GLenum mode)`
+- `GL_FRONT`
+- `GL_BACK`(default)
+- `GL_FRONT_AND_BACK`
+
+Culling backfaces will increase the rendering efficiency (and is enabled by default in the template).
+
+Vertex normal is the average of triangle normals. 
+
+There are many mesh formats as well as model loading libraries. Use any mesh format or loader, as long as it is compatible with the opengl core.
+
+Examples
+- 3DS: 3D studio format
+- OBJ: Wavefront format
+- MD2..MD5: Quake model format
+- MAX: 3D Studio Max format
+- X3D: XML based format
+
+Open asset import library is a popular loader that supports numerous mesh fomrats and is used in the template.
+
+OBJ format is useful (human readable), Visual Studio has a built in OBJ mesh editor. Does not support animation and OBJ may be slower to load than a binary format like 3DS. 
+
+Texture mapping increases realism without having to geometrically model fine details. If it looks right, it is right.
+Texturemapping can be used for many purposes including
+- Simulating materials
+- Reducing geometric complexity (fewer polygons)
+- Image processing
+- Reflections & shadows
+
+In texture mapping the visual detail is in the image, not the geometry. 
+
+A game will use many textures. You can make a texture current by binding it, similar to binding a VAO.
+
+Binding is done before the texture is sent to vram. Texture is also bound during rendering so opengl knows which texture to use. Use `glBindTexture(target, id);`
+The target is GL_TEXTURE_2D
+And once bound, the texture becomes the active texture and is used by all texturing calls until the next glBindTexture() is called.
+
+It's easier and better to use a sampler object, beacuse it stores sampling parameters, providing a simpler way to set texturing parameters than glTexParameter functions.
+
+Aliasing is an artefact that results from undersampling a signal. It is observed as spatial and temporal aliasing.
+
+Can have high frequencies aliasing as low frequencies
+
+Mipmaps remove the high frequencies using a stack of images.
+
+# Anisotropic filtering
+Not part of the core OpenGL spec, but widely available as an extension.
+Dramatically improves the quality of texture filtering operations.
+
+The standard texture filtering mdoes use texture coordinates to average texel colors.
+
+OpenGL is inherently a 3D api. Sometimes it's convenient to switch to 2D mode based on the screen size in pixels. 
+
+Render the 2D last! 2.5D text could be cool. 
+
+
+
+
+
+
+
+# CWK stuff:
+Make a more advanced shape and you'll get a better mark.
+
+The harder it is the better mark you get. 
