@@ -15,7 +15,9 @@ class CFreeTypeFont;
 class CHighResolutionTimer;
 class CSphere;
 class COpenAssetImportMesh;
+class CShip;
 class CAudio;
+class CCatmullRom;
 
 class Game {
 private:
@@ -33,6 +35,8 @@ private:
 	COpenAssetImportMesh *m_pBarrelMesh;
 	COpenAssetImportMesh *m_pHorseMesh;
 	CSphere *m_pSphere;
+	CShip *m_pShip;  // Procedural solar sail (Coons patch)
+	CCatmullRom *m_pCatmullRom;
 	CHighResolutionTimer *m_pHighResolutionTimer;
 	CAudio *m_pAudio;
 
@@ -40,6 +44,8 @@ private:
 	double m_dt;
 	int m_framesPerSecond;
 	bool m_appActive;
+	float m_currentDistance;
+	float m_cameraRoll; // roll angle in degrees, controlled by left/right arrow keys
 
 
 public:

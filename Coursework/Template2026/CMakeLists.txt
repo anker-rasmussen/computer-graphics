@@ -37,7 +37,9 @@ set(SOURCES
     OpenGLTemplate/Plane.cpp
     OpenGLTemplate/Shaders.cpp
     OpenGLTemplate/Skybox.cpp
+    OpenGLTemplate/Ship.cpp
     OpenGLTemplate/Sphere.cpp
+    OpenGLTemplate/CatmullRom/CatmullRom.cpp
     OpenGLTemplate/Texture.cpp
     OpenGLTemplate/VertexBufferObject.cpp
     OpenGLTemplate/VertexBufferObjectIndexed.cpp
@@ -55,6 +57,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${ASSIMP_INCLUDE_DIRS}
     ${FREEIMAGE_INCLUDE_DIR}
     OpenGLTemplate
+    OpenGLTemplate/CatmullRom
 )
 
 # Link libraries

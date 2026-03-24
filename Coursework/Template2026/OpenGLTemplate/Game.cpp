@@ -37,10 +37,12 @@ Source code drawn from a number of sources and examples, including contributions
 #include "Plane.h"
 #include "Shaders.h"
 #include "FreeTypeFont.h"
+#include "Ship.h"
 #include "Sphere.h"
 #include "MatrixStack.h"
 #include "OpenAssetImportMesh.h"
 #include "Audio.h"
+#include "CatmullRom.h"
 
 // Constructor
 Game::Game()
@@ -54,6 +56,8 @@ Game::Game()
 	m_pBarrelMesh = NULL;
 	m_pHorseMesh = NULL;
 	m_pSphere = NULL;
+	m_pShip = NULL;
+	m_pCatmullRom = NULL;
 	m_pHighResolutionTimer = NULL;
 	m_pAudio = NULL;
 
@@ -61,6 +65,8 @@ Game::Game()
 	m_framesPerSecond = 0;
 	m_frameCount = 0;
 	m_elapsedTime = 0.0f;
+	m_currentDistance = 0.0f;
+	m_cameraRoll = 0.0f;
 }
 
 // Destructor
@@ -74,6 +80,8 @@ Game::~Game()
 	delete m_pBarrelMesh;
 	delete m_pHorseMesh;
 	delete m_pSphere;
+	if (m_pShip) { m_pShip->Release(); delete m_pShip; m_pShip = NULL; }
+	if (m_pCatmullRom) { m_pCatmullRom->Release(); delete m_pCatmullRom; m_pCatmullRom = NULL; }
 	delete m_pAudio;
 
 	if (m_pShaderPrograms != NULL) {
@@ -102,6 +110,7 @@ void Game::Initialise()
 	m_pBarrelMesh = new COpenAssetImportMesh;
 	m_pHorseMesh = new COpenAssetImportMesh;
 	m_pSphere = new CSphere;
+	m_pShip = new CShip;
 	m_pAudio = new CAudio;
 
 	int width = m_gameWindow.GetWidth();
@@ -118,6 +127,8 @@ void Game::Initialise()
 	sShaderFileNames.push_back("mainShader.frag");
 	sShaderFileNames.push_back("textShader.vert");
 	sShaderFileNames.push_back("textShader.frag");
+	sShaderFileNames.push_back("sailShader.vert");
+	sShaderFileNames.push_back("sailShader.frag");
 
 	for (int i = 0; i < (int) sShaderFileNames.size(); i++) {
 		string sExt = sShaderFileNames[i].substr((int) sShaderFileNames[i].size()-4, 4);
@@ -148,7 +159,13 @@ void Game::Initialise()
 	pFontProgram->LinkProgram();
 	m_pShaderPrograms->push_back(pFontProgram);
 
-	// You can follow this pattern to load additional shaders
+	// Create a shader program for the solar sail
+	CShaderProgram *pSailProgram = new CShaderProgram;
+	pSailProgram->CreateProgram();
+	pSailProgram->AddShaderToProgram(&shShaders[4]);
+	pSailProgram->AddShaderToProgram(&shShaders[5]);
+	pSailProgram->LinkProgram();
+	m_pShaderPrograms->push_back(pSailProgram);
 
 	// Create the skybox
 	// Skybox downloaded from http://www.akimbo.in/forum/viewtopic.php?f=10&t=9
@@ -166,7 +183,16 @@ void Game::Initialise()
 
 	// Create a sphere
 	m_pSphere->Create("resources/textures/", "dirtpile01.jpg", 25, 25);  // Texture downloaded from http://www.psionicgames.com/?page_id=26 on 24 Jan 2013
+
+	// Iridescent texture mapped via the Coons patch (s,t) UVs
+	m_pShip->Create("resources/textures/", "iridescent.png");
 	glEnable(GL_CULL_FACE);
+
+	// Create the Catmull-Rom circular camera path and track
+	m_pCatmullRom = new CCatmullRom;
+	m_pCatmullRom->CreateCentreline();
+	m_pCatmullRom->CreateOffsetCurves();
+	m_pCatmullRom->CreateTrack("resources/textures/", "asteroids.jpg");
 
 	// Initialise audio and play background music
 	m_pAudio->Initialise();
@@ -293,6 +319,51 @@ void Game::Render()
 		m_pSphere->Render();
 	modelViewMatrixStack.Pop();
 
+	// Render the solar sail using the sail shader
+
+	CShaderProgram *pSailProgram = (*m_pShaderPrograms)[2];
+	pSailProgram->UseProgram();
+	pSailProgram->SetUniform("matrices.projMatrix", m_pCamera->GetPerspectiveProjectionMatrix());
+	pSailProgram->SetUniform("sampler0", 0);
+
+	// Set light uniforms on sail shader
+	pSailProgram->SetUniform("light1.position", viewMatrix * lightPosition1);
+	pSailProgram->SetUniform("light1.La", glm::vec3(1.0f));
+	pSailProgram->SetUniform("light1.Ld", glm::vec3(1.0f));
+	pSailProgram->SetUniform("light1.Ls", glm::vec3(1.0f));
+
+	modelViewMatrixStack.Push();
+		modelViewMatrixStack.Translate(glm::vec3(0.0f, 25.0f, 50.0f));
+		modelViewMatrixStack.Scale(3.0f);
+
+		// Highly reflective mirror-like solar sail material
+		pSailProgram->SetUniform("material1.Ma", glm::vec3(0.3f, 0.3f, 0.35f));
+		pSailProgram->SetUniform("material1.Md", glm::vec3(1.0f, 1.0f, 1.0f));
+		pSailProgram->SetUniform("material1.Ms", glm::vec3(1.5f, 1.5f, 1.5f));
+		pSailProgram->SetUniform("material1.shininess", 200.0f);
+		pSailProgram->SetUniform("bUseTexture", true);
+
+		pSailProgram->SetUniform("matrices.modelViewMatrix", modelViewMatrixStack.Top());
+		pSailProgram->SetUniform("matrices.normalMatrix",
+			m_pCamera->ComputeNormalMatrix(modelViewMatrixStack.Top()));
+		m_pShip->Render();
+	modelViewMatrixStack.Pop();
+
+
+	// Switch back to main shader for subsequent rendering
+	pMainProgram->UseProgram();
+
+	// Render the track — two-sided since the camera views it from varying angles
+	glDisable(GL_CULL_FACE);
+	modelViewMatrixStack.Push();
+		pMainProgram->SetUniform("matrices.modelViewMatrix", modelViewMatrixStack.Top());
+		pMainProgram->SetUniform("matrices.normalMatrix",
+			m_pCamera->ComputeNormalMatrix(modelViewMatrixStack.Top()));
+		pMainProgram->SetUniform("bUseTexture", true);
+		m_pCatmullRom->RenderTrack();
+	modelViewMatrixStack.Pop();
+	glEnable(GL_CULL_FACE);
+
 	// Draw the 2D graphics after the 3D graphics
 	DisplayFrameRate();
 
@@ -305,10 +376,30 @@ void Game::Render()
 void Game::Update()
 {
 
-	// Update the camera using the amount of time that has elapsed to avoid framerate dependent motion
-	m_pCamera->Update(m_dt);
-	
-	// m_pCamera->Set(glm::vec3(0.0f,300.0f,100.0f), glm::vec3(0.0f,0.0f,0.0f),glm::vec3(10,0.5f,1));
+	// Camera follows the Catmull-Rom spline, always looking at the sail
+	float speed = 40.0f;
+	m_currentDistance += speed * (float)(m_dt / 1000.0);
+
+	GLFWwindow *win = m_gameWindow.GetWindow();
+	float rollSpeed = 60.0f; // degrees per second
+	if (glfwGetKey(win, GLFW_KEY_LEFT) == GLFW_PRESS)
+		m_cameraRoll -= rollSpeed * (float)(m_dt / 1000.0);
+	if (glfwGetKey(win, GLFW_KEY_RIGHT) == GLFW_PRESS)
+		m_cameraRoll += rollSpeed * (float)(m_dt / 1000.0);
+
+	glm::vec3 pos, up;
+	if (m_pCatmullRom->Sample(m_currentDistance, pos, up)) {
+		glm::vec3 sailCenter(0.0f, 25.0f, 50.0f);
+		glm::vec3 forward = glm::normalize(sailCenter - pos);
+
+		glm::vec3 worldUp(0.0f, 1.0f, 0.0f);
+		float rollRad = glm::radians(m_cameraRoll);
+		glm::vec3 right = glm::normalize(glm::cross(forward, worldUp));
+		glm::vec3 rolledUp = glm::normalize(
+			worldUp * cosf(rollRad) + right * sinf(rollRad));
+
+		m_pCamera->Set(pos, sailCenter, rolledUp);
+	}
 
 	
 	m_pAudio->Update();
@@ -343,10 +434,13 @@ void Game::DisplayFrameRate()
 		// Use the font shader program and render the text
 		fontProgram->UseProgram();
 		glDisable(GL_DEPTH_TEST);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		fontProgram->SetUniform("matrices.modelViewMatrix", glm::mat4(1));
 		fontProgram->SetUniform("matrices.projMatrix", m_pCamera->GetOrthographicProjectionMatrix());
 		fontProgram->SetUniform("vColour", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 		m_pFtFont->Render(20, height - 20, 20, "FPS: %d", m_framesPerSecond);
+		glDisable(GL_BLEND);
 	}
 }
 
