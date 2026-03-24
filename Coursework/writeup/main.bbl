@@ -1,0 +1,465 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global/global}
+    \entry{reddit_solarsail}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=d327a8c3a49fa2268e626950bb5a5812}{%
+           family={u/mstx},
+           familyi={u\bibinitperiod}}}%
+      }
+      \strng{namehash}{d327a8c3a49fa2268e626950bb5a5812}
+      \strng{fullhash}{d327a8c3a49fa2268e626950bb5a5812}
+      \strng{fullhashraw}{d327a8c3a49fa2268e626950bb5a5812}
+      \strng{bibnamehash}{d327a8c3a49fa2268e626950bb5a5812}
+      \strng{authorbibnamehash}{d327a8c3a49fa2268e626950bb5a5812}
+      \strng{authornamehash}{d327a8c3a49fa2268e626950bb5a5812}
+      \strng{authorfullhash}{d327a8c3a49fa2268e626950bb5a5812}
+      \strng{authorfullhashraw}{d327a8c3a49fa2268e626950bb5a5812}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Blender render that inspired the solar sail design}
+      \field{title}{Solar Sail}
+      \field{urlday}{27}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://www.reddit.com/r/blender/comments/fklhsa/solar_sail/
+      \endverb
+      \verb{url}
+      \verb https://www.reddit.com/r/blender/comments/fklhsa/solar_sail/
+      \endverb
+    \endentry
+    \entry{farin2002coons}{incollection}{}{}
+      \name{author}{1}{}{%
+        {{hash=56fa1c9ea58607d54edffd55ef286457}{%
+           family={Farin},
+           familyi={F\bibinitperiod},
+           given={Gerald},
+           giveni={G\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Morgan Kaufmann}%
+      }
+      \strng{namehash}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{fullhash}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{fullhashraw}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{bibnamehash}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{authorbibnamehash}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{authornamehash}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{authorfullhash}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{authorfullhashraw}{56fa1c9ea58607d54edffd55ef286457}
+      \field{extraname}{1}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Curves and Surfaces for {CAGD}: A Practical Guide}
+      \field{chapter}{20}
+      \field{edition}{5}
+      \field{title}{Coons Patches}
+      \field{year}{2002}
+      \verb{urlraw}
+      \verb https://pzs.dstu.dp.ua/DataMining/subdivision/bibl/farin.pdf
+      \endverb
+      \verb{url}
+      \verb https://pzs.dstu.dp.ua/DataMining/subdivision/bibl/farin.pdf
+      \endverb
+    \endentry
+    \entry{ye2003coons}{thesis}{}{}
+      \name{author}{1}{}{%
+        {{hash=64c6027236af0c00ce3bb2be2afa5d5b}{%
+           family={Ye},
+           familyi={Y\bibinitperiod},
+           given={Chunyan},
+           giveni={C\bibinitperiod}}}%
+      }
+      \list{institution}{1}{%
+        {East Tennessee State University}%
+      }
+      \strng{namehash}{64c6027236af0c00ce3bb2be2afa5d5b}
+      \strng{fullhash}{64c6027236af0c00ce3bb2be2afa5d5b}
+      \strng{fullhashraw}{64c6027236af0c00ce3bb2be2afa5d5b}
+      \strng{bibnamehash}{64c6027236af0c00ce3bb2be2afa5d5b}
+      \strng{authorbibnamehash}{64c6027236af0c00ce3bb2be2afa5d5b}
+      \strng{authornamehash}{64c6027236af0c00ce3bb2be2afa5d5b}
+      \strng{authorfullhash}{64c6027236af0c00ce3bb2be2afa5d5b}
+      \strng{authorfullhashraw}{64c6027236af0c00ce3bb2be2afa5d5b}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{month}{5}
+      \field{note}{Coons patch construction from four boundary curves}
+      \field{title}{Extensions to {OpenGL} for {CAGD}}
+      \field{type}{mathesis}
+      \field{year}{2003}
+      \verb{urlraw}
+      \verb https://dc.etsu.edu/etd/767
+      \endverb
+      \verb{url}
+      \verb https://dc.etsu.edu/etd/767
+      \endverb
+    \endentry
+    \entry{farin2002bezier}{incollection}{}{}
+      \name{author}{1}{}{%
+        {{hash=56fa1c9ea58607d54edffd55ef286457}{%
+           family={Farin},
+           familyi={F\bibinitperiod},
+           given={Gerald},
+           giveni={G\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Morgan Kaufmann}%
+      }
+      \strng{namehash}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{fullhash}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{fullhashraw}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{bibnamehash}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{authorbibnamehash}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{authornamehash}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{authorfullhash}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{authorfullhashraw}{56fa1c9ea58607d54edffd55ef286457}
+      \field{extraname}{2}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Curves and Surfaces for {CAGD}: A Practical Guide}
+      \field{chapter}{4}
+      \field{edition}{5}
+      \field{title}{The Bernstein Form of a {Bézier} Curve}
+      \field{year}{2002}
+      \field{pages}{47\bibrangedash 71}
+      \range{pages}{25}
+      \verb{urlraw}
+      \verb https://pzs.dstu.dp.ua/DataMining/subdivision/bibl/farin.pdf
+      \endverb
+      \verb{url}
+      \verb https://pzs.dstu.dp.ua/DataMining/subdivision/bibl/farin.pdf
+      \endverb
+    \endentry
+    \entry{pomax}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=0de37da1d654c10aed33d7b7347b8e3b}{%
+           family={Pomax},
+           familyi={P\bibinitperiod}}}%
+      }
+      \strng{namehash}{0de37da1d654c10aed33d7b7347b8e3b}
+      \strng{fullhash}{0de37da1d654c10aed33d7b7347b8e3b}
+      \strng{fullhashraw}{0de37da1d654c10aed33d7b7347b8e3b}
+      \strng{bibnamehash}{0de37da1d654c10aed33d7b7347b8e3b}
+      \strng{authorbibnamehash}{0de37da1d654c10aed33d7b7347b8e3b}
+      \strng{authornamehash}{0de37da1d654c10aed33d7b7347b8e3b}
+      \strng{authorfullhash}{0de37da1d654c10aed33d7b7347b8e3b}
+      \strng{authorfullhashraw}{0de37da1d654c10aed33d7b7347b8e3b}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{A Primer on {Bézier} Curves}
+      \field{urlday}{5}
+      \field{urlmonth}{3}
+      \field{urlyear}{2026}
+      \field{year}{2024}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://pomax.github.io/bezierinfo/
+      \endverb
+      \verb{url}
+      \verb https://pomax.github.io/bezierinfo/
+      \endverb
+    \endentry
+    \entry{redbook}{book}{}{}
+      \name{author}{4}{}{%
+        {{hash=1f1ca63507e96f9cc4a750c9aa696e17}{%
+           family={Shreiner},
+           familyi={S\bibinitperiod},
+           given={Dave},
+           giveni={D\bibinitperiod}}}%
+        {{hash=8c05d03fa819867f583968eff08d2c78}{%
+           family={Sellers},
+           familyi={S\bibinitperiod},
+           given={Graham},
+           giveni={G\bibinitperiod}}}%
+        {{hash=390ad4cadd5cd84641c5cf9b46d9ee68}{%
+           family={Kessenich},
+           familyi={K\bibinitperiod},
+           given={John},
+           giveni={J\bibinitperiod}}}%
+        {{hash=e72429c69ad8f6a6fbd4adb4da737e3c}{%
+           family={Licea-Kane},
+           familyi={L\bibinithyphendelim K\bibinitperiod},
+           given={Bill},
+           giveni={B\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Addison-Wesley}%
+      }
+      \strng{namehash}{952d3d552470f00960828494fc220c68}
+      \strng{fullhash}{013b8af7f80d35331ac81c02b6d7d8d3}
+      \strng{fullhashraw}{013b8af7f80d35331ac81c02b6d7d8d3}
+      \strng{bibnamehash}{952d3d552470f00960828494fc220c68}
+      \strng{authorbibnamehash}{952d3d552470f00960828494fc220c68}
+      \strng{authornamehash}{952d3d552470f00960828494fc220c68}
+      \strng{authorfullhash}{013b8af7f80d35331ac81c02b6d7d8d3}
+      \strng{authorfullhashraw}{013b8af7f80d35331ac81c02b6d7d8d3}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{edition}{8}
+      \field{isbn}{978-0-321-77303-6}
+      \field{title}{{OpenGL} Programming Guide}
+      \field{year}{2013}
+    \endentry
+    \entry{gamedevbill_normals}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=186861331bc9f1f322977d226cb7dbc4}{%
+           family={{GameDevBill}},
+           familyi={G\bibinitperiod}}}%
+      }
+      \strng{namehash}{186861331bc9f1f322977d226cb7dbc4}
+      \strng{fullhash}{186861331bc9f1f322977d226cb7dbc4}
+      \strng{fullhashraw}{186861331bc9f1f322977d226cb7dbc4}
+      \strng{bibnamehash}{186861331bc9f1f322977d226cb7dbc4}
+      \strng{authorbibnamehash}{186861331bc9f1f322977d226cb7dbc4}
+      \strng{authornamehash}{186861331bc9f1f322977d226cb7dbc4}
+      \strng{authorfullhash}{186861331bc9f1f322977d226cb7dbc4}
+      \strng{authorfullhashraw}{186861331bc9f1f322977d226cb7dbc4}
+      \field{extraname}{1}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{How to Calculate Normal Vectors in Shader Graph}
+      \field{urlday}{27}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://www.youtube.com/watch?v=arCHjoQHgEU
+      \endverb
+      \verb{url}
+      \verb https://www.youtube.com/watch?v=arCHjoQHgEU
+      \endverb
+    \endentry
+    \entry{gamedevbill_normals_article}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=186861331bc9f1f322977d226cb7dbc4}{%
+           family={{GameDevBill}},
+           familyi={G\bibinitperiod}}}%
+      }
+      \strng{namehash}{186861331bc9f1f322977d226cb7dbc4}
+      \strng{fullhash}{186861331bc9f1f322977d226cb7dbc4}
+      \strng{fullhashraw}{186861331bc9f1f322977d226cb7dbc4}
+      \strng{bibnamehash}{186861331bc9f1f322977d226cb7dbc4}
+      \strng{authorbibnamehash}{186861331bc9f1f322977d226cb7dbc4}
+      \strng{authornamehash}{186861331bc9f1f322977d226cb7dbc4}
+      \strng{authorfullhash}{186861331bc9f1f322977d226cb7dbc4}
+      \strng{authorfullhashraw}{186861331bc9f1f322977d226cb7dbc4}
+      \field{extraname}{2}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Shader Graph Normal Calculation}
+      \field{urlday}{27}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://gamedevbill.com/shader-graph-normal-calculation/
+      \endverb
+      \verb{url}
+      \verb https://gamedevbill.com/shader-graph-normal-calculation/
+      \endverb
+    \endentry
+    \entry{vlogize_normals}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=bd287712e9ae69d10e67379bdc65988a}{%
+           family={vlogize},
+           familyi={v\bibinitperiod}}}%
+      }
+      \strng{namehash}{bd287712e9ae69d10e67379bdc65988a}
+      \strng{fullhash}{bd287712e9ae69d10e67379bdc65988a}
+      \strng{fullhashraw}{bd287712e9ae69d10e67379bdc65988a}
+      \strng{bibnamehash}{bd287712e9ae69d10e67379bdc65988a}
+      \strng{authorbibnamehash}{bd287712e9ae69d10e67379bdc65988a}
+      \strng{authornamehash}{bd287712e9ae69d10e67379bdc65988a}
+      \strng{authorfullhash}{bd287712e9ae69d10e67379bdc65988a}
+      \strng{authorfullhashraw}{bd287712e9ae69d10e67379bdc65988a}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{How to Calculate Normals for {Bézier} Curves in {3D} Graphics --- Normals Explained!}
+      \field{urlday}{28}
+      \field{urlmonth}{2}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://www.youtube.com/watch?v=n3mBt-D6yI0
+      \endverb
+      \verb{url}
+      \verb https://www.youtube.com/watch?v=n3mBt-D6yI0
+      \endverb
+    \endentry
+    \entry{graphicsguy_bezier}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=9469f96caed58753ce6c0260ad8d1ff6}{%
+           family={{The Graphics Guy}},
+           familyi={T\bibinitperiod}}}%
+      }
+      \strng{namehash}{9469f96caed58753ce6c0260ad8d1ff6}
+      \strng{fullhash}{9469f96caed58753ce6c0260ad8d1ff6}
+      \strng{fullhashraw}{9469f96caed58753ce6c0260ad8d1ff6}
+      \strng{bibnamehash}{9469f96caed58753ce6c0260ad8d1ff6}
+      \strng{authorbibnamehash}{9469f96caed58753ce6c0260ad8d1ff6}
+      \strng{authornamehash}{9469f96caed58753ce6c0260ad8d1ff6}
+      \strng{authorfullhash}{9469f96caed58753ce6c0260ad8d1ff6}
+      \strng{authorfullhashraw}{9469f96caed58753ce6c0260ad8d1ff6}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{{OpenGL} Shader Programming 9: {Bézier} Surface}
+      \field{urlday}{2}
+      \field{urlmonth}{3}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://www.youtube.com/watch?v=TdUqn1j-wBM
+      \endverb
+      \verb{url}
+      \verb https://www.youtube.com/watch?v=TdUqn1j-wBM
+      \endverb
+    \endentry
+    \entry{farin2002}{book}{}{}
+      \name{author}{1}{}{%
+        {{hash=56fa1c9ea58607d54edffd55ef286457}{%
+           family={Farin},
+           familyi={F\bibinitperiod},
+           given={Gerald},
+           giveni={G\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Morgan Kaufmann}%
+      }
+      \strng{namehash}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{fullhash}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{fullhashraw}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{bibnamehash}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{authorbibnamehash}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{authornamehash}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{authorfullhash}{56fa1c9ea58607d54edffd55ef286457}
+      \strng{authorfullhashraw}{56fa1c9ea58607d54edffd55ef286457}
+      \field{extraname}{3}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{edition}{5}
+      \field{isbn}{978-1-55860-737-8}
+      \field{title}{Curves and Surfaces for {CAGD}: A Practical Guide}
+      \field{year}{2002}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://pzs.dstu.dp.ua/DataMining/subdivision/bibl/farin.pdf
+      \endverb
+      \verb{url}
+      \verb https://pzs.dstu.dp.ua/DataMining/subdivision/bibl/farin.pdf
+      \endverb
+    \endentry
+    \entry{tex_asteroids}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=7d7443734c773fc7aaea2057453cd65c}{%
+           family={{Discover Magazine}},
+           familyi={D\bibinitperiod}}}%
+      }
+      \strng{namehash}{7d7443734c773fc7aaea2057453cd65c}
+      \strng{fullhash}{7d7443734c773fc7aaea2057453cd65c}
+      \strng{fullhashraw}{7d7443734c773fc7aaea2057453cd65c}
+      \strng{bibnamehash}{7d7443734c773fc7aaea2057453cd65c}
+      \strng{authorbibnamehash}{7d7443734c773fc7aaea2057453cd65c}
+      \strng{authornamehash}{7d7443734c773fc7aaea2057453cd65c}
+      \strng{authorfullhash}{7d7443734c773fc7aaea2057453cd65c}
+      \strng{authorfullhashraw}{7d7443734c773fc7aaea2057453cd65c}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Track texture image source}
+      \field{title}{4 Facts About Asteroids You May Not Have Known}
+      \field{urlday}{5}
+      \field{urlmonth}{3}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://www.discovermagazine.com/4-facts-about-asteroids-you-may-not-have-known-43667
+      \endverb
+      \verb{url}
+      \verb https://www.discovermagazine.com/4-facts-about-asteroids-you-may-not-have-known-43667
+      \endverb
+    \endentry
+    \entry{tex_iridescent}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=85472807855312dc7e2ff632f5376b5b}{%
+           family={{iStockphoto}},
+           familyi={i\bibinitperiod}}}%
+      }
+      \strng{namehash}{85472807855312dc7e2ff632f5376b5b}
+      \strng{fullhash}{85472807855312dc7e2ff632f5376b5b}
+      \strng{fullhashraw}{85472807855312dc7e2ff632f5376b5b}
+      \strng{bibnamehash}{85472807855312dc7e2ff632f5376b5b}
+      \strng{authorbibnamehash}{85472807855312dc7e2ff632f5376b5b}
+      \strng{authornamehash}{85472807855312dc7e2ff632f5376b5b}
+      \strng{authorfullhash}{85472807855312dc7e2ff632f5376b5b}
+      \strng{authorfullhashraw}{85472807855312dc7e2ff632f5376b5b}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Solar sail texture image source}
+      \field{title}{Futuristic Gold Hexagonal Texture Background}
+      \field{urlday}{5}
+      \field{urlmonth}{3}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://media.istockphoto.com/id/1472652067/nl/foto/futuristic-gold-hexagonal-texture-background-3d-rendering.jpg
+      \endverb
+      \verb{url}
+      \verb https://media.istockphoto.com/id/1472652067/nl/foto/futuristic-gold-hexagonal-texture-background-3d-rendering.jpg
+      \endverb
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+
