@@ -1,0 +1,10 @@
+# Solar Sail Material
+newmtl SailMaterial
+Ns 50.000000
+Ka 0.200000 0.200000 0.250000 # Ambient
+Kd 0.600000 0.600000 0.650000 # Diffuse
+Ks 1.000000 1.000000 1.000000 # Specular
+Ni 1.000000 # Refraction Index
+d 1.000000 # Dissolve (how see-through)
+illum 2 # Illlumination
+map_Kd iridescent.png # Color mapping.
