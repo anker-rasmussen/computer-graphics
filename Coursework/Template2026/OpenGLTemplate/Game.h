@@ -15,6 +15,7 @@ class CFreeTypeFont;
 class CHighResolutionTimer;
 class CSphere;
 class COpenAssetImportMesh;
+class CTexture;
 class CShip;
 class CAudio;
 class CCatmullRom;
@@ -42,8 +43,9 @@ private:
 	CAnimatedMesh *m_pJean;
 	CAnimatedMesh *m_pMieli;
 	CBridge *m_pBridge;       // procedural bridge (unused)
-	COpenAssetImportMesh *m_pBridgeMesh;  // GLB diorama
-	COpenAssetImportMesh *m_pChairMesh;   // chair model (rendered twice)
+	COpenAssetImportMesh *m_pChairMesh;
+	COpenAssetImportMesh *m_pMonitorMesh;
+	COpenAssetImportMesh *m_pTableMesh;
 	bool m_cutsceneActive;
 	float m_shipCharge;   // 0.0–1.0, stored energy (drives hull neon glow + thrust)
 	float m_sailUnfurl;   // 0.0–1.0, how far sails are extended
@@ -74,4 +76,14 @@ private:
 	double m_elapsedTime;
 
 	static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+	// Visual novel dialogue
+	void RenderDialogue(const string& speaker, const string& text);
+	GLuint m_dialogueVAO, m_dialogueVBO, m_whiteTex;
+	CTexture *m_portraitJean, *m_portraitMieli, *m_portraitPellegrini;
+	CTexture *m_pFloorTex, *m_pWallTex;
+	struct DialogueLine { string speaker; string text; };
+	vector<DialogueLine> m_dialogueScript;
+	int m_dialogueLine;
+	static void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 };
