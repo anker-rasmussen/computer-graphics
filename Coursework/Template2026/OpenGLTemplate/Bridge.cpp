@@ -1,15 +1,12 @@
 #include "Common.h"
-
 #define _USE_MATH_DEFINES
-
+#include <cmath>
 #include "Bridge.h"
-#include <math.h>
 
 CBridge::CBridge()
     : m_vao(0), m_vbo(0), m_ibo(0),
-      m_hasPanelTexture(false),
-      m_opaqueIndexCount(0), m_mirrorIndexStart(0), m_mirrorIndexCount(0),
-      m_emissiveIndexStart(0), m_emissiveIndexCount(0),
+      m_floorIndexCount(0), m_wallIndexStart(0),
+      m_roomIndexCount(0), m_mirrorIndexStart(0), m_mirrorIndexCount(0),
       m_wallTransparency(0.0f)
 {}
 
@@ -39,317 +36,153 @@ void CBridge::AddQuad(unsigned int i0, unsigned int i1, unsigned int i2, unsigne
     AddTriangle(i0, i2, i3);
 }
 
-// ---------------------------------------------------------------------------
-// Cylinder shell — rendered from inside, normals point inward
-// ---------------------------------------------------------------------------
-void CBridge::CreateCylinder(float length, float radius, int slices)
+void CBridge::Create(float width, float height, float depth)
 {
-    float halfLen = length * 0.5f;
+    float hw = width * 0.5f;
+    float hd = depth * 0.5f;
 
-    for (int i = 0; i <= slices; i++) {
-        float theta = (float)i / (float)slices * 2.0f * (float)M_PI;
-        float x = radius * cosf(theta);
-        float y = radius * sinf(theta);
-        // Inward-facing normal
-        glm::vec3 normal = -glm::normalize(glm::vec3(x, y, 0.0f));
-        float u = (float)i / (float)slices;
-
-        // Front ring
-        AddVertex(glm::vec3(x, y, halfLen), glm::vec2(u, 0.0f), normal);
-        // Back ring
-        AddVertex(glm::vec3(x, y, -halfLen), glm::vec2(u, 1.0f), normal);
+    // Floor (y = 0)
+    {
+        glm::vec3 n(0, 1, 0);
+        float tile = 1.5f; // tiles per unit — higher = smaller tiles
+        unsigned int v0 = AddVertex(glm::vec3(-hw, 0, -hd), glm::vec2(0, 0), n);
+        unsigned int v1 = AddVertex(glm::vec3( hw, 0, -hd), glm::vec2(width * tile, 0), n);
+        unsigned int v2 = AddVertex(glm::vec3( hw, 0,  hd), glm::vec2(width * tile, depth * tile), n);
+        unsigned int v3 = AddVertex(glm::vec3(-hw, 0,  hd), glm::vec2(0, depth * tile), n);
+        AddQuad(v3, v2, v1, v0);
     }
 
-    for (int i = 0; i < slices; i++) {
-        unsigned int base = i * 2;
-        // Wind CW from inside
-        AddQuad(base, base + 2, base + 3, base + 1);
+    m_floorIndexCount = (unsigned int)m_indices.size();
+    m_wallIndexStart = m_floorIndexCount;
+
+    // Curved walls + ceiling as a half-cylinder arch (replaces flat walls and ceiling)
+    // Arc from left floor edge, up over the ceiling, down to right floor edge
+    // This gives curved side walls that merge into a curved ceiling
+    {
+        int arcSegments = 16;
+        float arcRadius = hw; // radius matches half-width
+        float centerY = 0.0f; // arc center at floor level
+
+        // Arc goes from angle PI (left floor) to 0 (right floor)
+        // through PI/2 (ceiling top)
+        for (int j = 0; j < arcSegments; j++) {
+            float a0 = (float)M_PI * (1.0f - (float)j / arcSegments);
+            float a1 = (float)M_PI * (1.0f - (float)(j + 1) / arcSegments);
+
+            float x0 = arcRadius * cosf(a0);
+            float y0 = centerY + arcRadius * sinf(a0);
+            float x1 = arcRadius * cosf(a1);
+            float y1 = centerY + arcRadius * sinf(a1);
+
+            // Inward-pointing normals
+            glm::vec3 n0(-cosf(a0), -sinf(a0), 0.0f);
+            glm::vec3 n1(-cosf(a1), -sinf(a1), 0.0f);
+
+            float wallTile = 3.0f;
+            float u0 = (float)j / arcSegments * wallTile;
+            float u1 = (float)(j + 1) / arcSegments * wallTile;
+            float vTile = depth * 1.5f;
+
+            // Front edge (z = +hd) and back edge (z = -hd)
+            unsigned int v0 = AddVertex(glm::vec3(x0, y0,  hd), glm::vec2(u0, 0), n0);
+            unsigned int v1 = AddVertex(glm::vec3(x0, y0, -hd), glm::vec2(u0, vTile), n0);
+            unsigned int v2 = AddVertex(glm::vec3(x1, y1, -hd), glm::vec2(u1, vTile), n1);
+            unsigned int v3 = AddVertex(glm::vec3(x1, y1,  hd), glm::vec2(u1, 0), n1);
+            AddQuad(v0, v1, v2, v3);
+        }
     }
-}
 
-// ---------------------------------------------------------------------------
-// Flat floor at bottom of cylinder
-// ---------------------------------------------------------------------------
-void CBridge::CreateFloor(float length, float radius)
-{
-    float halfLen = length * 0.5f;
-    // Floor sits at bottom of cylinder
-    float floorY = -radius * 0.85f;
-    float floorHalfW = radius * 0.9f;
-    glm::vec3 n(0, 1, 0);
+    // Back wall (z = -hd, normal points inward +z) — arch with door cutout
+    {
+        glm::vec3 n(0, 0, 1);
+        int arcSegments = 16;
+        float arcRadius = hw;
 
-    unsigned int v0 = AddVertex(glm::vec3(-floorHalfW, floorY, -halfLen), glm::vec2(0, 0), n);
-    unsigned int v1 = AddVertex(glm::vec3( floorHalfW, floorY, -halfLen), glm::vec2(1, 0), n);
-    unsigned int v2 = AddVertex(glm::vec3( floorHalfW, floorY,  halfLen), glm::vec2(1, 1), n);
-    unsigned int v3 = AddVertex(glm::vec3(-floorHalfW, floorY,  halfLen), glm::vec2(0, 1), n);
-    AddQuad(v0, v1, v2, v3);
+        // Door dimensions
+        float doorHW = 0.4f;  // half-width of door
+        float doorH = 1.8f;   // door height
 
-    // Grid lines — subtle raised strips across the floor
-    float stripH = 0.005f;
-    int numStrips = 8;
-    for (int i = 1; i < numStrips; i++) {
-        float z = -halfLen + length * (float)i / (float)numStrips;
-        float hw = 0.02f; // strip half-width in Z
-        unsigned int s0 = AddVertex(glm::vec3(-floorHalfW, floorY + stripH, z - hw), glm::vec2(0, 0.5f), n);
-        unsigned int s1 = AddVertex(glm::vec3( floorHalfW, floorY + stripH, z - hw), glm::vec2(1, 0.5f), n);
-        unsigned int s2 = AddVertex(glm::vec3( floorHalfW, floorY + stripH, z + hw), glm::vec2(1, 0.5f), n);
-        unsigned int s3 = AddVertex(glm::vec3(-floorHalfW, floorY + stripH, z + hw), glm::vec2(0, 0.5f), n);
-        AddQuad(s0, s1, s2, s3);
+        // Left section: from left floor to left door edge, up the arc
+        // Right section: from right door edge to right floor, up the arc
+        // Top section: arc above the door
+
+        // Left wall panel (floor to door height, left edge to door left)
+        unsigned int lv0 = AddVertex(glm::vec3(-hw, 0, -hd), glm::vec2(0, 0), n);
+        unsigned int lv1 = AddVertex(glm::vec3(-doorHW, 0, -hd), glm::vec2(0.5f - doorHW/hw*0.5f, 0), n);
+        unsigned int lv2 = AddVertex(glm::vec3(-doorHW, doorH, -hd), glm::vec2(0.5f - doorHW/hw*0.5f, doorH/arcRadius), n);
+        unsigned int lv3 = AddVertex(glm::vec3(-hw, doorH, -hd), glm::vec2(0, doorH/arcRadius), n);
+        AddQuad(lv0, lv1, lv2, lv3);
+
+        // Right wall panel
+        unsigned int rv0 = AddVertex(glm::vec3(doorHW, 0, -hd), glm::vec2(0.5f + doorHW/hw*0.5f, 0), n);
+        unsigned int rv1 = AddVertex(glm::vec3(hw, 0, -hd), glm::vec2(1, 0), n);
+        unsigned int rv2 = AddVertex(glm::vec3(hw, doorH, -hd), glm::vec2(1, doorH/arcRadius), n);
+        unsigned int rv3 = AddVertex(glm::vec3(doorHW, doorH, -hd), glm::vec2(0.5f + doorHW/hw*0.5f, doorH/arcRadius), n);
+        AddQuad(rv0, rv1, rv2, rv3);
+
+        // Door lintel (top of door opening)
+        unsigned int tv0 = AddVertex(glm::vec3(-doorHW, doorH, -hd), glm::vec2(0.4f, 0.6f), n);
+        unsigned int tv1 = AddVertex(glm::vec3( doorHW, doorH, -hd), glm::vec2(0.6f, 0.6f), n);
+        unsigned int tv2 = AddVertex(glm::vec3( doorHW, doorH + 0.1f, -hd), glm::vec2(0.6f, 0.63f), n);
+        unsigned int tv3 = AddVertex(glm::vec3(-doorHW, doorH + 0.1f, -hd), glm::vec2(0.4f, 0.63f), n);
+        AddQuad(tv0, tv1, tv2, tv3);
+
+        // Upper arc section (above door height to top of arch)
+        // Fan from center point
+        unsigned int centerVert = AddVertex(glm::vec3(0, (arcRadius + doorH) * 0.5f, -hd), glm::vec2(0.5f, 0.75f), n);
+
+        std::vector<unsigned int> upperVerts;
+        // Start from left at door height
+        upperVerts.push_back(AddVertex(glm::vec3(-hw, doorH + 0.1f, -hd), glm::vec2(0, 0.63f), n));
+        // Arc above door height
+        for (int i = 0; i <= arcSegments; i++) {
+            float a = (float)M_PI * (1.0f - (float)i / arcSegments);
+            float x = arcRadius * cosf(a);
+            float y = arcRadius * sinf(a);
+            if (y < doorH + 0.1f) continue;  // skip below door lintel
+            float u = (float)i / arcSegments;
+            upperVerts.push_back(AddVertex(glm::vec3(x, y, -hd), glm::vec2(u, y/arcRadius), n));
+        }
+        // End at right at door height
+        upperVerts.push_back(AddVertex(glm::vec3(hw, doorH + 0.1f, -hd), glm::vec2(1, 0.63f), n));
+
+        for (unsigned int i = 0; i < upperVerts.size() - 1; i++) {
+            AddTriangle(centerVert, upperVerts[i], upperVerts[i + 1]);
+        }
     }
-}
 
-// ---------------------------------------------------------------------------
-// Angular chair — a low-profile, clean geometric seat
-// ---------------------------------------------------------------------------
-void CBridge::CreateChair(glm::vec3 pos, float facingAngle)
-{
-    float rad = facingAngle * (float)M_PI / 180.0f;
-    float c = cosf(rad), s = sinf(rad);
+    m_roomIndexCount = (unsigned int)m_indices.size();
 
-    auto rotate = [&](glm::vec3 p) -> glm::vec3 {
-        return glm::vec3(p.x * c - p.z * s, p.y, p.x * s + p.z * c) + pos;
-    };
-
-    // Seat: flat slab
-    float seatW = 0.4f, seatD = 0.4f, seatH = 0.02f;
-    float seatY = 0.35f;
-    glm::vec3 n_up(0, 1, 0);
-    glm::vec3 n_front = glm::normalize(glm::vec3(s, 0, c));
-
-    // Seat top
-    glm::vec3 corners[4] = {
-        rotate(glm::vec3(-seatW, seatY, -seatD)),
-        rotate(glm::vec3( seatW, seatY, -seatD)),
-        rotate(glm::vec3( seatW, seatY,  seatD)),
-        rotate(glm::vec3(-seatW, seatY,  seatD))
-    };
-    unsigned int v0 = AddVertex(corners[0], glm::vec2(0,0), n_up);
-    unsigned int v1 = AddVertex(corners[1], glm::vec2(1,0), n_up);
-    unsigned int v2 = AddVertex(corners[2], glm::vec2(1,1), n_up);
-    unsigned int v3 = AddVertex(corners[3], glm::vec2(0,1), n_up);
-    AddQuad(v0, v1, v2, v3);
-
-    // Seat bottom
-    glm::vec3 n_down(0, -1, 0);
-    glm::vec3 botCorners[4] = {
-        rotate(glm::vec3(-seatW, seatY - seatH, -seatD)),
-        rotate(glm::vec3( seatW, seatY - seatH, -seatD)),
-        rotate(glm::vec3( seatW, seatY - seatH,  seatD)),
-        rotate(glm::vec3(-seatW, seatY - seatH,  seatD))
-    };
-    unsigned int b0 = AddVertex(botCorners[0], glm::vec2(0,0), n_down);
-    unsigned int b1 = AddVertex(botCorners[1], glm::vec2(1,0), n_down);
-    unsigned int b2 = AddVertex(botCorners[2], glm::vec2(1,1), n_down);
-    unsigned int b3 = AddVertex(botCorners[3], glm::vec2(0,1), n_down);
-    AddQuad(b3, b2, b1, b0);
-
-    // Seat sides (4 faces)
-    // Front
-    unsigned int f0 = AddVertex(corners[0], glm::vec2(0,0), -n_front);
-    unsigned int f1 = AddVertex(corners[1], glm::vec2(1,0), -n_front);
-    unsigned int f2 = AddVertex(botCorners[1], glm::vec2(1,1), -n_front);
-    unsigned int f3 = AddVertex(botCorners[0], glm::vec2(0,1), -n_front);
-    AddQuad(f0, f1, f2, f3);
-
-    // Backrest: angled slab behind the seat
-    float backH = 0.55f, backThick = 0.02f;
-    float backAngle = 0.15f; // slight lean back
-    glm::vec3 backCorners[4] = {
-        rotate(glm::vec3(-seatW, seatY, seatD)),
-        rotate(glm::vec3( seatW, seatY, seatD)),
-        rotate(glm::vec3( seatW, seatY + backH, seatD + backAngle)),
-        rotate(glm::vec3(-seatW, seatY + backH, seatD + backAngle))
-    };
-    unsigned int bk0 = AddVertex(backCorners[0], glm::vec2(0,0), n_front);
-    unsigned int bk1 = AddVertex(backCorners[1], glm::vec2(1,0), n_front);
-    unsigned int bk2 = AddVertex(backCorners[2], glm::vec2(1,1), n_front);
-    unsigned int bk3 = AddVertex(backCorners[3], glm::vec2(0,1), n_front);
-    AddQuad(bk0, bk1, bk2, bk3);
-
-    // Two legs — thin angular supports
-    float legW = 0.04f;
-    for (int side = -1; side <= 1; side += 2) {
-        float lx = side * (seatW - 0.1f);
-        glm::vec3 legCorners[4] = {
-            rotate(glm::vec3(lx - legW, 0.0f,  seatD * 0.5f)),
-            rotate(glm::vec3(lx + legW, 0.0f,  seatD * 0.5f)),
-            rotate(glm::vec3(lx + legW, seatY, seatD * 0.5f)),
-            rotate(glm::vec3(lx - legW, seatY, seatD * 0.5f))
-        };
-        glm::vec3 legN = glm::normalize(glm::vec3((float)side, 0, 0));
-        unsigned int l0 = AddVertex(legCorners[0], glm::vec2(0,0), legN);
-        unsigned int l1 = AddVertex(legCorners[1], glm::vec2(1,0), legN);
-        unsigned int l2 = AddVertex(legCorners[2], glm::vec2(1,1), legN);
-        unsigned int l3 = AddVertex(legCorners[3], glm::vec2(0,1), legN);
-        AddQuad(l0, l1, l2, l3);
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Low central table
-// ---------------------------------------------------------------------------
-void CBridge::CreateTable(glm::vec3 pos)
-{
-    float halfW = 0.5f, halfD = 0.3f;
-    float topY = 0.3f, thick = 0.015f;
-    glm::vec3 n_up(0, 1, 0);
-
-    // Table top
-    unsigned int v0 = AddVertex(pos + glm::vec3(-halfW, topY, -halfD), glm::vec2(0,0), n_up);
-    unsigned int v1 = AddVertex(pos + glm::vec3( halfW, topY, -halfD), glm::vec2(1,0), n_up);
-    unsigned int v2 = AddVertex(pos + glm::vec3( halfW, topY,  halfD), glm::vec2(1,1), n_up);
-    unsigned int v3 = AddVertex(pos + glm::vec3(-halfW, topY,  halfD), glm::vec2(0,1), n_up);
-    AddQuad(v0, v1, v2, v3);
-
-    // Table underside
-    glm::vec3 n_dn(0, -1, 0);
-    unsigned int u0 = AddVertex(pos + glm::vec3(-halfW, topY - thick, -halfD), glm::vec2(0,0), n_dn);
-    unsigned int u1 = AddVertex(pos + glm::vec3( halfW, topY - thick, -halfD), glm::vec2(1,0), n_dn);
-    unsigned int u2 = AddVertex(pos + glm::vec3( halfW, topY - thick,  halfD), glm::vec2(1,1), n_dn);
-    unsigned int u3 = AddVertex(pos + glm::vec3(-halfW, topY - thick,  halfD), glm::vec2(0,1), n_dn);
-    AddQuad(u3, u2, u1, u0);
-
-    // Single center leg
-    float legW = 0.04f;
-    glm::vec3 legN(0, 0, 1);
-    unsigned int l0 = AddVertex(pos + glm::vec3(-legW, 0.0f,  -legW), glm::vec2(0,0), legN);
-    unsigned int l1 = AddVertex(pos + glm::vec3( legW, 0.0f,  -legW), glm::vec2(1,0), legN);
-    unsigned int l2 = AddVertex(pos + glm::vec3( legW, topY - thick, -legW), glm::vec2(1,1), legN);
-    unsigned int l3 = AddVertex(pos + glm::vec3(-legW, topY - thick, -legW), glm::vec2(0,1), legN);
-    AddQuad(l0, l1, l2, l3);
-
-    legN = glm::vec3(0, 0, -1);
-    unsigned int l4 = AddVertex(pos + glm::vec3(-legW, 0.0f,   legW), glm::vec2(0,0), legN);
-    unsigned int l5 = AddVertex(pos + glm::vec3( legW, 0.0f,   legW), glm::vec2(1,0), legN);
-    unsigned int l6 = AddVertex(pos + glm::vec3( legW, topY - thick,  legW), glm::vec2(1,1), legN);
-    unsigned int l7 = AddVertex(pos + glm::vec3(-legW, topY - thick,  legW), glm::vec2(0,1), legN);
-    AddQuad(l7, l6, l5, l4);
-}
-
-// ---------------------------------------------------------------------------
-// Wall display panel — flat textured quad mounted on the cylinder wall
-// ---------------------------------------------------------------------------
-void CBridge::CreateWallPanel(glm::vec3 center, glm::vec3 normal, float width, float height)
-{
-    glm::vec3 up(0, 1, 0);
-    glm::vec3 right = glm::normalize(glm::cross(up, normal));
-    glm::vec3 actualUp = glm::normalize(glm::cross(normal, right));
-
-    float hw = width * 0.5f, hh = height * 0.5f;
-
-    unsigned int v0 = AddVertex(center - right * hw - actualUp * hh, glm::vec2(0, 0), normal);
-    unsigned int v1 = AddVertex(center + right * hw - actualUp * hh, glm::vec2(1, 0), normal);
-    unsigned int v2 = AddVertex(center + right * hw + actualUp * hh, glm::vec2(1, 1), normal);
-    unsigned int v3 = AddVertex(center - right * hw + actualUp * hh, glm::vec2(0, 1), normal);
-    AddQuad(v0, v1, v2, v3);
-}
-
-// ---------------------------------------------------------------------------
-// Smartmatter wall — the large panel that goes transparent
-// This is a separate render range so we can control its alpha
-// ---------------------------------------------------------------------------
-void CBridge::CreateSmartmatterWall(float length, float height, float z)
-{
+    // Front wall — smartmatter mirror (z = +hd, normal points inward -z)
+    // Curved arch shape, rendered separately for alpha control
     m_mirrorIndexStart = (unsigned int)m_indices.size();
+    {
+        glm::vec3 n(0, 0, -1);
+        int arcSegments = 16;
+        float arcRadius = hw;
 
-    float halfLen = length * 0.5f;
-    float floorY = -2.5f * 0.85f;  // match floor position
-    glm::vec3 n(0, 0, -1);  // faces into the room (wall at +Z end)
+        // Build outline: right floor -> arc -> left floor
+        std::vector<unsigned int> outline;
+        // Right floor corner
+        outline.push_back(AddVertex(glm::vec3(hw, 0, hd), glm::vec2(1, 0), n));
+        // Arc points from right (angle 0) to left (angle PI)
+        for (int i = 0; i <= arcSegments; i++) {
+            float a = (float)M_PI * (float)i / arcSegments;
+            float x = arcRadius * cosf(a);
+            float y = arcRadius * sinf(a);
+            outline.push_back(AddVertex(glm::vec3(x, y, hd), glm::vec2(1.0f - (float)i / arcSegments, 1), n));
+        }
+        // Left floor corner
+        outline.push_back(AddVertex(glm::vec3(-hw, 0, hd), glm::vec2(0, 0), n));
 
-    unsigned int v0 = AddVertex(glm::vec3(-halfLen, floorY, z),           glm::vec2(0, 0), n);
-    unsigned int v1 = AddVertex(glm::vec3( halfLen, floorY, z),           glm::vec2(1, 0), n);
-    unsigned int v2 = AddVertex(glm::vec3( halfLen, floorY + height, z),  glm::vec2(1, 1), n);
-    unsigned int v3 = AddVertex(glm::vec3(-halfLen, floorY + height, z),  glm::vec2(0, 1), n);
-    AddQuad(v0, v1, v2, v3);
-
+        // Fan from first vertex (right floor)
+        for (unsigned int i = 1; i < outline.size() - 1; i++) {
+            AddTriangle(outline[0], outline[i + 1], outline[i]);
+        }
+    }
     m_mirrorIndexCount = (unsigned int)m_indices.size() - m_mirrorIndexStart;
-}
 
-// ---------------------------------------------------------------------------
-// Sydän's jewel — a small glowing sphere
-// ---------------------------------------------------------------------------
-void CBridge::CreateJewel(glm::vec3 pos, float radius, int detail)
-{
-    m_emissiveIndexStart = (unsigned int)m_indices.size();
-
-    unsigned int baseVert = (unsigned int)m_vertices.size();
-
-    // Simple UV sphere
-    for (int j = 0; j <= detail; j++) {
-        float phi = (float)M_PI * (float)j / (float)detail;
-        for (int i = 0; i <= detail; i++) {
-            float theta = 2.0f * (float)M_PI * (float)i / (float)detail;
-            float x = sinf(phi) * cosf(theta);
-            float y = cosf(phi);
-            float z = sinf(phi) * sinf(theta);
-            glm::vec3 n(x, y, z);
-            float u = (float)i / (float)detail;
-            float v = (float)j / (float)detail;
-            AddVertex(pos + n * radius, glm::vec2(u, v), n);
-        }
-    }
-
-    for (int j = 0; j < detail; j++) {
-        for (int i = 0; i < detail; i++) {
-            unsigned int row0 = baseVert + j * (detail + 1) + i;
-            unsigned int row1 = row0 + detail + 1;
-            AddTriangle(row0, row1, row0 + 1);
-            AddTriangle(row0 + 1, row1, row1 + 1);
-        }
-    }
-
-    m_emissiveIndexCount = (unsigned int)m_indices.size() - m_emissiveIndexStart;
-}
-
-// ---------------------------------------------------------------------------
-// Create — builds all geometry and uploads to GPU
-// ---------------------------------------------------------------------------
-void CBridge::Create(const std::string& panelTexDir, const std::string& panelTexFile)
-{
-    float cylLength = 10.0f;
-    float cylRadius = 2.5f;
-    float floorY = -cylRadius * 0.85f;
-
-    // --- Opaque geometry ---
-
-    // Cylinder walls
-    CreateCylinder(cylLength, cylRadius, 32);
-
-    // Floor with grid lines
-    CreateFloor(cylLength, cylRadius);
-
-    // Two chairs facing each other across the table
-    CreateChair(glm::vec3(-0.8f, floorY, -0.5f), 90.0f);   // left chair, facing right
-    CreateChair(glm::vec3( 0.8f, floorY, -0.5f), -90.0f);  // right chair, facing left
-
-    // Low table between them
-    CreateTable(glm::vec3(0.0f, floorY, -0.5f));
-
-    // Wall panels — mounted on the curved walls at various angles
-    // Left wall panel
-    CreateWallPanel(
-        glm::vec3(-cylRadius * 0.95f, floorY + 1.5f, -2.0f),
-        glm::vec3(1, 0, 0), 1.2f, 0.8f);
-
-    // Right wall panel
-    CreateWallPanel(
-        glm::vec3(cylRadius * 0.95f, floorY + 1.5f, -2.0f),
-        glm::vec3(-1, 0, 0), 1.2f, 0.8f);
-
-    // Back wall panel (navigation display)
-    CreateWallPanel(
-        glm::vec3(0.0f, floorY + 1.5f, -cylLength * 0.5f + 0.05f),
-        glm::vec3(0, 0, 1), 2.0f, 1.0f);
-
-    m_opaqueIndexCount = (unsigned int)m_indices.size();
-
-    // --- Smartmatter wall (separate render range for alpha control) ---
-    CreateSmartmatterWall(cylRadius * 1.6f, cylRadius * 1.5f, cylLength * 0.5f - 0.01f);
-
-    // --- Sydän's jewel (emissive, separate range) ---
-    CreateJewel(glm::vec3(1.5f, floorY + 0.5f, 2.0f), 0.08f, 12);
-
-    // --- Upload to GPU ---
+    // Upload to GPU
     glGenVertexArrays(1, &m_vao);
     glBindVertexArray(m_vao);
 
@@ -363,52 +196,47 @@ void CBridge::Create(const std::string& panelTexDir, const std::string& panelTex
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(unsigned int),
                  m_indices.data(), GL_STATIC_DRAW);
 
-    // pos: location 0
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(BridgeVertex),
                           (void*)offsetof(BridgeVertex, pos));
-    // uv: location 1
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(BridgeVertex),
                           (void*)offsetof(BridgeVertex, uv));
-    // normal: location 2
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(BridgeVertex),
                           (void*)offsetof(BridgeVertex, normal));
 
     glBindVertexArray(0);
-
-    // Load panel texture
-    if (!panelTexFile.empty()) {
-        std::string fullPath = panelTexDir + panelTexFile;
-        if (m_panelTexture.Load(fullPath, true)) {
-            m_hasPanelTexture = true;
-        }
-    }
 }
 
-// ---------------------------------------------------------------------------
-// Render — three passes: opaque room, smartmatter wall, jewel
-// ---------------------------------------------------------------------------
-void CBridge::Render()
+void CBridge::RenderRoom()
 {
     glBindVertexArray(m_vao);
+    glDrawElements(GL_TRIANGLES, m_roomIndexCount, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+}
 
-    // Pass 1: opaque room geometry
-    glDrawElements(GL_TRIANGLES, m_opaqueIndexCount, GL_UNSIGNED_INT, 0);
+void CBridge::RenderFloor()
+{
+    glBindVertexArray(m_vao);
+    glDrawElements(GL_TRIANGLES, m_floorIndexCount, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+}
 
-    // Pass 2: smartmatter wall (caller should set alpha uniform)
-    if (m_mirrorIndexCount > 0) {
-        glDrawElements(GL_TRIANGLES, m_mirrorIndexCount, GL_UNSIGNED_INT,
-                       (void*)(m_mirrorIndexStart * sizeof(unsigned int)));
-    }
+void CBridge::RenderWalls()
+{
+    glBindVertexArray(m_vao);
+    unsigned int wallCount = m_roomIndexCount - m_wallIndexStart;
+    glDrawElements(GL_TRIANGLES, wallCount, GL_UNSIGNED_INT,
+                   (void*)(m_wallIndexStart * sizeof(unsigned int)));
+    glBindVertexArray(0);
+}
 
-    // Pass 3: jewel (caller should set emissive material)
-    if (m_emissiveIndexCount > 0) {
-        glDrawElements(GL_TRIANGLES, m_emissiveIndexCount, GL_UNSIGNED_INT,
-                       (void*)(m_emissiveIndexStart * sizeof(unsigned int)));
-    }
-
+void CBridge::RenderMirrorWall()
+{
+    glBindVertexArray(m_vao);
+    glDrawElements(GL_TRIANGLES, m_mirrorIndexCount, GL_UNSIGNED_INT,
+                   (void*)(m_mirrorIndexStart * sizeof(unsigned int)));
     glBindVertexArray(0);
 }
 
@@ -418,5 +246,4 @@ void CBridge::Release()
     if (m_vbo) glDeleteBuffers(1, &m_vbo);
     if (m_ibo) glDeleteBuffers(1, &m_ibo);
     m_vao = m_vbo = m_ibo = 0;
-    if (m_hasPanelTexture) m_panelTexture.Release();
 }
