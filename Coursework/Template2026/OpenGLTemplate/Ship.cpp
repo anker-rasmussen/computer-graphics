@@ -121,12 +121,12 @@ void CShip::CreateNacelles(float maxNacelleRadius, float length, int count)
 	int stacks = 20;
 	float angles[] = { 35.0f, 125.0f, 215.0f, 305.0f };
 
-	float hullLength = 10.0f;
+	float hullLength = 16.0f;
 	float maxRadius = 1.5f;
 	float widthScale = 1.2f;
 	float heightScale = 0.8f;
 
-	float ht = 0.75f;
+	float ht = 0.85f;
 	float centerZ = hullLength * (0.5f - ht);
 	float hullR = maxRadius * HullProfile(ht);
 	float cutT = 0.5f;
@@ -507,7 +507,7 @@ void CShip::Create(string hullTexDir, string hullTexFile,
 	m_numTriangles = 0;
 
 	// Part 1: hull + nacelles
-	CreateHull(10.0f, 1.5f, 24, 40);
+	CreateHull(16.0f, 1.5f, 24, 50);
 	CreateNacelles(0.55f, 3.5f, 4);
 	m_hullTriangles = m_numTriangles;
 
