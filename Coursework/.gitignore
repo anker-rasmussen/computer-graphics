@@ -1,4 +1,5 @@
-*.glb
-*.fbx
 *.assxml
 *.zip
+
+# Large model files tracked selectively (most are local-only)
+# Use git add -f for specific models that should be committed

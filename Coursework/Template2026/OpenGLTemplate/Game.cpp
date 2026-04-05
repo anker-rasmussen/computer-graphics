@@ -229,9 +229,10 @@ void Game::Initialise()
 	m_pJean = new CAnimatedMesh;
 	m_pJean->Load("resources/models/Jean/jeansit.fbx");
 	m_pJean->LoadAnimation("resources/models/Jean/jeansit.fbx", "sit");
-	m_pJean->LoadAnimation("resources/models/Jean/jeanidle.fbx", "idle");
-	m_pJean->LoadAnimation("resources/models/Jean/jeanstand.fbx", "stand");
-	m_pJean->LoadAnimation("resources/models/Jean/jeanwalk.fbx", "walk");
+	m_pJean->LoadAnimation("resources/models/Jean/idle.fbx", "idle");
+	m_pJean->LoadAnimation("resources/models/Jean/walking.fbx", "walk");
+	m_pJean->LoadAnimation("resources/models/Jean/running.fbx", "run");
+	m_pJean->LoadAnimation("resources/models/Jean/jump.fbx", "jump");
 	m_pJean->SetTexture("resources/models/Jean/jean_tex0.png");
 	m_pJean->SetAnimation("sit");
 
@@ -247,7 +248,7 @@ void Game::Initialise()
 
 	// Load bridge diorama
 	m_pBridgeMesh = new COpenAssetImportMesh;
-	m_pBridgeMesh->Load("resources/models/galactic_command_station__starship_bridge.glb");
+	m_pBridgeMesh->Load("resources/models/bridge.glb");
 
 	// Load chair
 	m_pChairMesh = new COpenAssetImportMesh;
