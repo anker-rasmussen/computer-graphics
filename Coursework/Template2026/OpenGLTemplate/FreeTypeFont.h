@@ -4,7 +4,6 @@
 #include FT_FREETYPE_H
 
 #include "Common.h"
-#include "Texture.h"
 #include "Shaders.h"
 #include "VertexBufferObject.h"
 
@@ -32,7 +31,7 @@ public:
 private:
 	void CreateChar(int index);
 
-	CTexture m_charTextures[256];
+	GLuint m_charTextures[256];
 	int m_advX[256], m_advY[256];
 	int m_bearingX[256], m_bearingY[256];
 	int m_charWidth[256], m_charHeight[256];

@@ -39,13 +39,16 @@ void CFreeTypeFont::CreateChar(int index)
 		for (int cw = 0; cw < iTW; cw++)
 			bData[ch*iTW+cw] = (ch >= iH || cw >= iW) ? 0 : pBitmap->buffer[(iH-ch-1)*iW+cw];
 
-	// And create a texture from it
-
-	m_charTextures[index].CreateFromData(bData, iTW, iTH, 8, GL_DEPTH_COMPONENT, false);
-	m_charTextures[index].SetSamplerObjectParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	m_charTextures[index].SetSamplerObjectParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	m_charTextures[index].SetSamplerObjectParameter(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	m_charTextures[index].SetSamplerObjectParameter(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	// Create texture directly (learnopengl.com approach — no sampler objects)
+	glGenTextures(1, &m_charTextures[index]);
+	glBindTexture(GL_TEXTURE_2D, m_charTextures[index]);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, iTW, iTH, 0, GL_RED, GL_UNSIGNED_BYTE, bData);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	// Calculate glyph data
 	m_advX[index] = m_ftFace->glyph->advance.x>>6;
@@ -171,6 +174,7 @@ void CFreeTypeFont::Print(string text, int x, int y, int pixelSize)
 		return;
 
 	glBindVertexArray(m_vao);
+	glBindSampler(0, 0); // unbind any stale sampler object left by 3D rendering
 	m_shaderProgram->SetUniform("sampler0", 0);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -189,7 +193,8 @@ void CFreeTypeFont::Print(string text, int x, int y, int pixelSize)
 		iCurX += m_bearingX[iIndex] * pixelSize / m_loadedPixelSize;
 		if(text[i] != ' ')
 		{
-			m_charTextures[iIndex].Bind();
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, m_charTextures[iIndex]);
 			glm::mat4 mModelView = glm::translate(glm::mat4(1.0f), glm::vec3(float(iCurX), float(iCurY), 0.0f));
 			mModelView = glm::scale(mModelView, glm::vec3(fScale));
 			m_shaderProgram->SetUniform("matrices.modelViewMatrix", mModelView);
@@ -217,8 +222,7 @@ void CFreeTypeFont::Render(int x, int y, int pixelSize, const char* text, ...)
 // Deletes all font textures
 void CFreeTypeFont::ReleaseFont()
 {
-	for (int i = 0; i < 128; i++)
-		m_charTextures[i].Release();
+	glDeleteTextures(128, m_charTextures);
 	m_vbo.Release();
 	glDeleteVertexArrays(1, &m_vao);
 }
