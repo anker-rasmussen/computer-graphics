@@ -1,0 +1,3 @@
+newmtl TableHall
+Kd 0.6 0.6 0.6
+map_Kd ../textures/TableHall_Base_color.png

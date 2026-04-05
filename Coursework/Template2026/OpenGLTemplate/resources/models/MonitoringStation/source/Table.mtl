@@ -1,0 +1,7 @@
+newmtl hologram_glass
+Kd 1.0 1.0 1.0
+map_Kd ../textures/hologram_glass_Emissive.png
+
+newmtl table
+Kd 0.6 0.6 0.6
+map_Kd ../textures/table_Base_color.png

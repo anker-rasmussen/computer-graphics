@@ -1,0 +1,7 @@
+newmtl table_holi
+Kd 0.6 0.6 0.6
+map_Kd ../textures/table_holi_Base_color.png
+
+newmtl Hologram
+Kd 1.0 1.0 1.0
+map_Kd ../textures/Hologram_Emissive.png
