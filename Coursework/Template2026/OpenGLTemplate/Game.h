@@ -18,6 +18,8 @@ class COpenAssetImportMesh;
 class CShip;
 class CAudio;
 class CCatmullRom;
+class CAnimatedMesh;
+class CBridge;  // unused — keeping for now
 
 class Game {
 private:
@@ -35,8 +37,17 @@ private:
 	COpenAssetImportMesh *m_pBarrelMesh;
 	COpenAssetImportMesh *m_pHorseMesh;
 	CSphere *m_pSphere;
-	CShip *m_pShip;  // Procedural solar sail (Coons patch)
+	CShip *m_pShip;  // Full procedural ship (hull + nacelles + sails)
 	CCatmullRom *m_pCatmullRom;
+	CAnimatedMesh *m_pJean;
+	CAnimatedMesh *m_pMieli;
+	CBridge *m_pBridge;       // procedural bridge (unused)
+	COpenAssetImportMesh *m_pBridgeMesh;  // GLB diorama
+	COpenAssetImportMesh *m_pChairMesh;   // chair model (rendered twice)
+	bool m_cutsceneActive;
+	float m_shipCharge;   // 0.0–1.0, stored energy (drives hull neon glow + thrust)
+	float m_sailUnfurl;   // 0.0–1.0, how far sails are extended
+	int m_shipMode;       // 1 = idle/cruise (sails unfurl, charging), 2 = combat (sails furl, thrust)
 	CHighResolutionTimer *m_pHighResolutionTimer;
 	CAudio *m_pAudio;
 
@@ -45,7 +56,7 @@ private:
 	int m_framesPerSecond;
 	bool m_appActive;
 	float m_currentDistance;
-	float m_cameraRoll; // roll angle in degrees, controlled by left/right arrow keys
+	float m_cameraRoll;
 
 
 public:

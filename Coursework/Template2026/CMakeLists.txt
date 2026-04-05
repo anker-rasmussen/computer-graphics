@@ -39,6 +39,8 @@ set(SOURCES
     OpenGLTemplate/Skybox.cpp
     OpenGLTemplate/Ship.cpp
     OpenGLTemplate/Sphere.cpp
+    OpenGLTemplate/AnimatedMesh.cpp
+    OpenGLTemplate/Bridge.cpp
     OpenGLTemplate/CatmullRom/CatmullRom.cpp
     OpenGLTemplate/Texture.cpp
     OpenGLTemplate/VertexBufferObject.cpp

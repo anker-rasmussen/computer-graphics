@@ -43,6 +43,8 @@ Source code drawn from a number of sources and examples, including contributions
 #include "OpenAssetImportMesh.h"
 #include "Audio.h"
 #include "CatmullRom.h"
+#include "AnimatedMesh.h"
+#include "Bridge.h"
 
 // Constructor
 Game::Game()
@@ -58,6 +60,15 @@ Game::Game()
 	m_pSphere = NULL;
 	m_pShip = NULL;
 	m_pCatmullRom = NULL;
+	m_pJean = NULL;
+	m_pMieli = NULL;
+	m_pBridge = NULL;
+	m_pBridgeMesh = NULL;
+	m_pChairMesh = NULL;
+	m_cutsceneActive = true; // start in cutscene for testing
+	m_shipCharge = 0.0f;
+	m_sailUnfurl = 0.0f;
+	m_shipMode = 1;
 	m_pHighResolutionTimer = NULL;
 	m_pAudio = NULL;
 
@@ -82,6 +93,11 @@ Game::~Game()
 	delete m_pSphere;
 	if (m_pShip) { m_pShip->Release(); delete m_pShip; m_pShip = NULL; }
 	if (m_pCatmullRom) { m_pCatmullRom->Release(); delete m_pCatmullRom; m_pCatmullRom = NULL; }
+	delete m_pJean;
+	delete m_pMieli;
+	if (m_pBridge) { m_pBridge->Release(); delete m_pBridge; m_pBridge = NULL; }
+	delete m_pBridgeMesh;
+	delete m_pChairMesh;
 	delete m_pAudio;
 
 	if (m_pShaderPrograms != NULL) {
@@ -129,6 +145,10 @@ void Game::Initialise()
 	sShaderFileNames.push_back("textShader.frag");
 	sShaderFileNames.push_back("sailShader.vert");
 	sShaderFileNames.push_back("sailShader.frag");
+	sShaderFileNames.push_back("hullShader.vert");
+	sShaderFileNames.push_back("hullShader.frag");
+	sShaderFileNames.push_back("skinningShader.vert");
+	sShaderFileNames.push_back("skinningShader.frag");
 
 	for (int i = 0; i < (int) sShaderFileNames.size(); i++) {
 		string sExt = sShaderFileNames[i].substr((int) sShaderFileNames[i].size()-4, 4);
@@ -167,6 +187,22 @@ void Game::Initialise()
 	pSailProgram->LinkProgram();
 	m_pShaderPrograms->push_back(pSailProgram);
 
+	// Create a shader program for the hull (neon glow)
+	CShaderProgram *pHullProgram = new CShaderProgram;
+	pHullProgram->CreateProgram();
+	pHullProgram->AddShaderToProgram(&shShaders[6]);
+	pHullProgram->AddShaderToProgram(&shShaders[7]);
+	pHullProgram->LinkProgram();
+	m_pShaderPrograms->push_back(pHullProgram);
+
+	// Create a shader program for skinned meshes (index 4)
+	CShaderProgram *pSkinningProgram = new CShaderProgram;
+	pSkinningProgram->CreateProgram();
+	pSkinningProgram->AddShaderToProgram(&shShaders[8]); // skinningShader.vert
+	pSkinningProgram->AddShaderToProgram(&shShaders[9]); // skinningShader.frag
+	pSkinningProgram->LinkProgram();
+	m_pShaderPrograms->push_back(pSkinningProgram);
+
 	// Create the skybox
 	// Skybox downloaded from http://www.akimbo.in/forum/viewtopic.php?f=10&t=9
 	m_pSkybox->Create(2500.0f);
@@ -184,9 +220,38 @@ void Game::Initialise()
 	// Create a sphere
 	m_pSphere->Create("resources/textures/", "dirtpile01.jpg", 25, 25);  // Texture downloaded from http://www.psionicgames.com/?page_id=26 on 24 Jan 2013
 
-	// Iridescent texture mapped via the Coons patch (s,t) UVs
-	m_pShip->Create("resources/textures/", "iridescent.png");
+	// Hull uses neon circuit texture, sails use iridescent texture
+	m_pShip->Create("resources/textures/", "neon.png",
+	                "resources/textures/", "iridescent.png");
 	glEnable(GL_CULL_FACE);
+
+	// Load Jean (animated character)
+	m_pJean = new CAnimatedMesh;
+	m_pJean->Load("resources/models/Jean/jeansit.fbx");
+	m_pJean->LoadAnimation("resources/models/Jean/jeansit.fbx", "sit");
+	m_pJean->LoadAnimation("resources/models/Jean/jeanidle.fbx", "idle");
+	m_pJean->LoadAnimation("resources/models/Jean/jeanstand.fbx", "stand");
+	m_pJean->LoadAnimation("resources/models/Jean/jeanwalk.fbx", "walk");
+	m_pJean->SetTexture("resources/models/Jean/jean_tex0.png");
+	m_pJean->SetAnimation("sit");
+
+	// Load Mieli (animated character)
+	m_pMieli = new CAnimatedMesh;
+	m_pMieli->Load("resources/models/Mieli/mieli.fbx");
+	m_pMieli->LoadAnimation("resources/models/Mieli/sit.fbx", "sit");
+	m_pMieli->LoadAnimation("resources/models/Mieli/idle.fbx", "idle");
+	m_pMieli->LoadAnimation("resources/models/Mieli/walking.fbx", "walk");
+	m_pMieli->LoadAnimation("resources/models/Mieli/running.fbx", "run");
+	m_pMieli->SetTexture("resources/models/Mieli/mieli_tex0.jpg");
+	m_pMieli->SetAnimation("sit");
+
+	// Load bridge diorama
+	m_pBridgeMesh = new COpenAssetImportMesh;
+	m_pBridgeMesh->Load("resources/models/galactic_command_station__starship_bridge.glb");
+
+	// Load chair
+	m_pChairMesh = new COpenAssetImportMesh;
+	m_pChairMesh->Load("resources/models/Chair/source/Chair.obj");
 
 	// Create the Catmull-Rom circular camera path and track
 	m_pCatmullRom = new CCatmullRom;
@@ -319,34 +384,205 @@ void Game::Render()
 		m_pSphere->Render();
 	modelViewMatrixStack.Pop();
 
-	// Render the solar sail using the sail shader
+	// --- Cutscene: bridge interior + characters ---
+	if (m_cutsceneActive) {
 
-	CShaderProgram *pSailProgram = (*m_pShaderPrograms)[2];
-	pSailProgram->UseProgram();
-	pSailProgram->SetUniform("matrices.projMatrix", m_pCamera->GetPerspectiveProjectionMatrix());
-	pSailProgram->SetUniform("sampler0", 0);
+	// Bridge diorama — inside the ship hull
+	modelViewMatrixStack.Push();
+		modelViewMatrixStack.Translate(glm::vec3(0.0f, 25.0f, 50.0f)); // match ship position
+		modelViewMatrixStack.Rotate(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f);
+		modelViewMatrixStack.Scale(3.0f);
+		pMainProgram->SetUniform("bUseTexture", true);
+		pMainProgram->SetUniform("material1.Ma", glm::vec3(0.5f));
+		pMainProgram->SetUniform("material1.Md", glm::vec3(0.5f));
+		pMainProgram->SetUniform("material1.Ms", glm::vec3(1.0f));
+		pMainProgram->SetUniform("material1.shininess", 15.0f);
+		pMainProgram->SetUniform("matrices.modelViewMatrix", modelViewMatrixStack.Top());
+		pMainProgram->SetUniform("matrices.normalMatrix",
+			m_pCamera->ComputeNormalMatrix(modelViewMatrixStack.Top()));
+		m_pBridgeMesh->Render();
 
-	// Set light uniforms on sail shader
-	pSailProgram->SetUniform("light1.position", viewMatrix * lightPosition1);
-	pSailProgram->SetUniform("light1.La", glm::vec3(1.0f));
-	pSailProgram->SetUniform("light1.Ld", glm::vec3(1.0f));
-	pSailProgram->SetUniform("light1.Ls", glm::vec3(1.0f));
+		// Ceiling — flat quad across the top of the bridge
+		pMainProgram->SetUniform("bUseTexture", false);
+		pMainProgram->SetUniform("material1.Ma", glm::vec3(0.15f, 0.15f, 0.2f));
+		pMainProgram->SetUniform("material1.Md", glm::vec3(0.3f, 0.3f, 0.35f));
+		pMainProgram->SetUniform("material1.Ms", glm::vec3(0.5f));
+		pMainProgram->SetUniform("material1.shininess", 30.0f);
+		// Render ceiling as the terrain plane repositioned (reuse modelview)
+		// Actually we'll just use glBegin for a simple quad
+		glBegin(GL_QUADS);
+			glNormal3f(0.0f, -1.0f, 0.0f);
+			glVertex3f(-3.0f, 2.5f, -3.0f);
+			glVertex3f( 3.0f, 2.5f, -3.0f);
+			glVertex3f( 3.0f, 2.5f,  3.0f);
+			glVertex3f(-3.0f, 2.5f,  3.0f);
+		glEnd();
+		pMainProgram->SetUniform("bUseTexture", true);
+		pMainProgram->SetUniform("material1.Ma", glm::vec3(0.5f));
+		pMainProgram->SetUniform("material1.Md", glm::vec3(0.5f));
+		pMainProgram->SetUniform("material1.Ms", glm::vec3(1.0f));
+		pMainProgram->SetUniform("material1.shininess", 15.0f);
+	modelViewMatrixStack.Pop();
+
+	// Two chairs facing each other inside the bridge
+	// Chair 1 - mieli
+	modelViewMatrixStack.Push();
+		modelViewMatrixStack.Translate(glm::vec3(0.4f, 24.15f, 50.0f));
+		modelViewMatrixStack.Rotate(glm::vec3(0.0f, 1.0f, 0.0f), 00.0f);
+		modelViewMatrixStack.Scale(0.5f);
+		pMainProgram->SetUniform("matrices.modelViewMatrix", modelViewMatrixStack.Top());
+		pMainProgram->SetUniform("matrices.normalMatrix",
+			m_pCamera->ComputeNormalMatrix(modelViewMatrixStack.Top()));
+		m_pChairMesh->Render();
+	modelViewMatrixStack.Pop();
+
+	// Chair 2 - jean
+	modelViewMatrixStack.Push();
+		modelViewMatrixStack.Translate(glm::vec3(-0.6f, 24.15f, 50.0f));
+		modelViewMatrixStack.Rotate(glm::vec3(0.0f, 1.0f, 0.0f), 35.0f);
+		modelViewMatrixStack.Scale(0.5f);
+		pMainProgram->SetUniform("matrices.modelViewMatrix", modelViewMatrixStack.Top());
+		pMainProgram->SetUniform("matrices.normalMatrix",
+			m_pCamera->ComputeNormalMatrix(modelViewMatrixStack.Top()));
+		m_pChairMesh->Render();
+	modelViewMatrixStack.Pop();
+
+	// --- Render Jean (animated character) ---
+	{
+		CShaderProgram *pSkinProg = (*m_pShaderPrograms)[4];
+		pSkinProg->UseProgram();
+		pSkinProg->SetUniform("matrices.projMatrix", m_pCamera->GetPerspectiveProjectionMatrix());
+		pSkinProg->SetUniform("sampler0", 0);
+		pSkinProg->SetUniform("bUseTexture", true);
+
+		pSkinProg->SetUniform("light1.position", viewMatrix * lightPosition1);
+		pSkinProg->SetUniform("light1.La", glm::vec3(1.0f));
+		pSkinProg->SetUniform("light1.Ld", glm::vec3(1.0f));
+		pSkinProg->SetUniform("light1.Ls", glm::vec3(1.0f));
+		pSkinProg->SetUniform("material1.Ma", glm::vec3(0.5f));
+		pSkinProg->SetUniform("material1.Md", glm::vec3(0.5f));
+		pSkinProg->SetUniform("material1.Ms", glm::vec3(1.0f));
+		pSkinProg->SetUniform("material1.shininess", 15.0f);
+
+		// Upload bone matrices
+		pSkinProg->SetUniform("boneMatrices", m_pJean->GetBoneMatrices(), m_pJean->GetNumBones());
+
+		modelViewMatrixStack.Push();
+			// Position Jean on chair 2 — match chair at (-0.5, 24.2, 50.0)
+			modelViewMatrixStack.Translate(glm::vec3(-0.5f, 24.1f, 50.0f));
+			modelViewMatrixStack.Rotate(glm::vec3(0.0f, 1.0f, 0.0f), 1.5f);
+			modelViewMatrixStack.Scale(0.0049f);
+			pSkinProg->SetUniform("matrices.modelViewMatrix", modelViewMatrixStack.Top());
+			pSkinProg->SetUniform("matrices.normalMatrix",
+				m_pCamera->ComputeNormalMatrix(modelViewMatrixStack.Top()));
+			m_pJean->Render();
+		modelViewMatrixStack.Pop();
+
+		// Render Mieli on chair 1
+		pSkinProg->SetUniform("boneMatrices", m_pMieli->GetBoneMatrices(), m_pMieli->GetNumBones());
+
+		modelViewMatrixStack.Push();
+			// Match chair 1 at (0.4, 24.15, 50.0), rotation 0
+			modelViewMatrixStack.Translate(glm::vec3(0.4f, 24.15f, 50.0f));
+			modelViewMatrixStack.Rotate(glm::vec3(0.0f, 1.0f, 0.0f), 180.0f);
+			modelViewMatrixStack.Scale(0.5f);
+			pSkinProg->SetUniform("matrices.modelViewMatrix", modelViewMatrixStack.Top());
+			pSkinProg->SetUniform("matrices.normalMatrix",
+				m_pCamera->ComputeNormalMatrix(modelViewMatrixStack.Top()));
+			m_pMieli->Render();
+		modelViewMatrixStack.Pop();
+
+		pMainProgram->UseProgram();
+	}
+
+	} // end cutscene block
+
+	// --- Render ship in three passes: hull, thrust, sails ---
 
 	modelViewMatrixStack.Push();
 		modelViewMatrixStack.Translate(glm::vec3(0.0f, 25.0f, 50.0f));
 		modelViewMatrixStack.Scale(3.0f);
 
-		// Highly reflective mirror-like solar sail material
+		glm::mat4 shipMV = modelViewMatrixStack.Top();
+		glm::mat3 shipNM = m_pCamera->ComputeNormalMatrix(shipMV);
+
+		// Pass 1: Hull + nacelles with neon glow shader
+		CShaderProgram *pHullProgram = (*m_pShaderPrograms)[3];
+		pHullProgram->UseProgram();
+		pHullProgram->SetUniform("matrices.projMatrix", m_pCamera->GetPerspectiveProjectionMatrix());
+		pHullProgram->SetUniform("sampler0", 0);
+		pHullProgram->SetUniform("charge", m_shipCharge);
+
+		pHullProgram->SetUniform("light1.position", viewMatrix * lightPosition1);
+		pHullProgram->SetUniform("light1.La", glm::vec3(1.0f));
+		pHullProgram->SetUniform("light1.Ld", glm::vec3(1.0f));
+		pHullProgram->SetUniform("light1.Ls", glm::vec3(1.0f));
+
+		pHullProgram->SetUniform("material1.Ma", glm::vec3(0.15f, 0.15f, 0.2f));
+		pHullProgram->SetUniform("material1.Md", glm::vec3(0.6f, 0.6f, 0.7f));
+		pHullProgram->SetUniform("material1.Ms", glm::vec3(1.0f, 1.0f, 1.2f));
+		pHullProgram->SetUniform("material1.shininess", 80.0f);
+		pHullProgram->SetUniform("bUseTexture", true);
+
+		pHullProgram->SetUniform("matrices.modelViewMatrix", shipMV);
+		pHullProgram->SetUniform("matrices.normalMatrix", shipNM);
+		m_pShip->RenderHull();
+
+		// Pass 2: Ion thrust — always on, depth scales with charge
+		{
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE); // additive
+			glDepthMask(GL_FALSE);
+			glDisable(GL_CULL_FACE);
+
+			// Scale thrust length: pin cone base at exhaust plane, stretch tip by charge
+			// Exhaust Z in model space: centerZ - nacelleLength/2 = -2.5 - 1.75 = -4.25
+			float exhaustZ = -4.25f;
+			float thrustScale = 0.1f + 0.9f * m_shipCharge; // 10% idle, 100% at full charge
+			glm::mat4 thrustMV = shipMV
+				* glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, exhaustZ))
+				* glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, thrustScale))
+				* glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -exhaustZ));
+
+			pHullProgram->SetUniform("bUseTexture", false);
+			pHullProgram->SetUniform("material1.Ma", glm::vec3(0.0f));
+			// Brightness scales with charge: dim idle flicker → bright full burn
+			float intensity = 0.15f + 0.85f * m_shipCharge;
+			pHullProgram->SetUniform("material1.Md", intensity * glm::vec3(0.5f, 0.8f, 1.0f));
+			pHullProgram->SetUniform("material1.Ms", glm::vec3(0.0f));
+
+			pHullProgram->SetUniform("matrices.modelViewMatrix", thrustMV);
+			pHullProgram->SetUniform("matrices.normalMatrix",
+				m_pCamera->ComputeNormalMatrix(thrustMV));
+			m_pShip->RenderThrust();
+
+			glEnable(GL_CULL_FACE);
+			glDepthMask(GL_TRUE);
+			glDisable(GL_BLEND);
+		}
+
+		// Pass 3: Solar sails with sail shader — unfurl drives charge
+		CShaderProgram *pSailProgram = (*m_pShaderPrograms)[2];
+		pSailProgram->UseProgram();
+		pSailProgram->SetUniform("matrices.projMatrix", m_pCamera->GetPerspectiveProjectionMatrix());
+		pSailProgram->SetUniform("sampler0", 0);
+		pSailProgram->SetUniform("unfurl", m_sailUnfurl);
+
+		pSailProgram->SetUniform("light1.position", viewMatrix * lightPosition1);
+		pSailProgram->SetUniform("light1.La", glm::vec3(1.0f));
+		pSailProgram->SetUniform("light1.Ld", glm::vec3(1.0f));
+		pSailProgram->SetUniform("light1.Ls", glm::vec3(1.0f));
+
 		pSailProgram->SetUniform("material1.Ma", glm::vec3(0.3f, 0.3f, 0.35f));
 		pSailProgram->SetUniform("material1.Md", glm::vec3(1.0f, 1.0f, 1.0f));
 		pSailProgram->SetUniform("material1.Ms", glm::vec3(1.5f, 1.5f, 1.5f));
 		pSailProgram->SetUniform("material1.shininess", 200.0f);
 		pSailProgram->SetUniform("bUseTexture", true);
 
-		pSailProgram->SetUniform("matrices.modelViewMatrix", modelViewMatrixStack.Top());
-		pSailProgram->SetUniform("matrices.normalMatrix",
-			m_pCamera->ComputeNormalMatrix(modelViewMatrixStack.Top()));
-		m_pShip->Render();
+		pSailProgram->SetUniform("matrices.modelViewMatrix", shipMV);
+		pSailProgram->SetUniform("matrices.normalMatrix", shipNM);
+		m_pShip->RenderSails();
+
 	modelViewMatrixStack.Pop();
 
 
@@ -376,32 +612,36 @@ void Game::Render()
 void Game::Update()
 {
 
-	// Camera follows the Catmull-Rom spline, always looking at the sail
-	float speed = 40.0f;
-	m_currentDistance += speed * (float)(m_dt / 1000.0);
-
 	GLFWwindow *win = m_gameWindow.GetWindow();
-	float rollSpeed = 60.0f; // degrees per second
-	if (glfwGetKey(win, GLFW_KEY_LEFT) == GLFW_PRESS)
-		m_cameraRoll -= rollSpeed * (float)(m_dt / 1000.0);
-	if (glfwGetKey(win, GLFW_KEY_RIGHT) == GLFW_PRESS)
-		m_cameraRoll += rollSpeed * (float)(m_dt / 1000.0);
 
-	glm::vec3 pos, up;
-	if (m_pCatmullRom->Sample(m_currentDistance, pos, up)) {
-		glm::vec3 sailCenter(0.0f, 25.0f, 50.0f);
-		glm::vec3 forward = glm::normalize(sailCenter - pos);
+	// Free camera — WASD + mouse
+	m_pCamera->Update(m_dt);
 
-		glm::vec3 worldUp(0.0f, 1.0f, 0.0f);
-		float rollRad = glm::radians(m_cameraRoll);
-		glm::vec3 right = glm::normalize(glm::cross(forward, worldUp));
-		glm::vec3 rolledUp = glm::normalize(
-			worldUp * cosf(rollRad) + right * sinf(rollRad));
+	// Mode toggle: TAB switches between mode 1 (idle/cruise) and mode 2 (combat)
+	// Use a simple edge-detect to avoid rapid toggling
+	static bool tabWasPressed = false;
+	bool tabPressed = glfwGetKey(win, GLFW_KEY_TAB) == GLFW_PRESS;
+	if (tabPressed && !tabWasPressed)
+		m_shipMode = (m_shipMode == 1) ? 2 : 1;
+	tabWasPressed = tabPressed;
 
-		m_pCamera->Set(pos, sailCenter, rolledUp);
+	float dt_s = (float)(m_dt / 1000.0);
+
+	if (m_shipMode == 1) {
+		// Idle/cruise: sails unfurl, ship charges from solar energy
+		m_sailUnfurl = glm::min(m_sailUnfurl + 0.4f * dt_s, 1.0f);
+		// Charge proportional to how unfurled the sails are
+		m_shipCharge = glm::min(m_shipCharge + m_sailUnfurl * 0.3f * dt_s, 1.0f);
+	} else {
+		// Combat: sails retract, charge drains into thrust/combat systems
+		m_sailUnfurl = glm::max(m_sailUnfurl - 0.6f * dt_s, 0.0f);
+		m_shipCharge = glm::max(m_shipCharge - 0.15f * dt_s, 0.0f);
 	}
 
-	
+	// Update animated mesh
+	m_pJean->Update(dt_s);
+	m_pMieli->Update(dt_s);
+
 	m_pAudio->Update();
 }
 

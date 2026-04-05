@@ -18,6 +18,7 @@
 
 #include <assert.h>
 #include <cstdio>
+#include <FreeImage.h>
 #include "OpenAssetImportMesh.h"
 
 COpenAssetImportMesh::MeshEntry::MeshEntry()
@@ -169,16 +170,43 @@ bool COpenAssetImportMesh::InitMaterials(const aiScene* pScene, const std::strin
             aiString Path;
 
 			if (pMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
-                std::string FullPath = Dir + "/" + Path.data;
-                m_Textures[i] = new CTexture();
-                if (!m_Textures[i]->Load(FullPath, true)) {
-					fprintf(stderr, "Error loading mesh texture: %s\n", FullPath.c_str());
-                    delete m_Textures[i];
-                    m_Textures[i] = NULL;
-                    Ret = false;
-                }
-                else {
-                    printf("Loaded texture '%s'\n", FullPath.c_str());
+                // Check for embedded texture (GLB files)
+                const aiTexture* embTex = pScene->GetEmbeddedTexture(Path.C_Str());
+                if (embTex && embTex->mHeight == 0) {
+                    // Compressed embedded texture — decode via FreeImage
+                    FIMEMORY* fiMem = FreeImage_OpenMemory(
+                        (BYTE*)embTex->pcData, embTex->mWidth);
+                    FREE_IMAGE_FORMAT fif = FreeImage_GetFileTypeFromMemory(fiMem, 0);
+                    FIBITMAP* dib = FreeImage_LoadFromMemory(fif, fiMem, 0);
+                    FreeImage_CloseMemory(fiMem);
+                    if (dib) {
+                        BYTE* pData = FreeImage_GetBits(dib);
+                        int w = FreeImage_GetWidth(dib);
+                        int h = FreeImage_GetHeight(dib);
+                        int bpp = FreeImage_GetBPP(dib);
+                        GLenum fmt = (bpp == 32) ? GL_BGRA :
+                                     (bpp == 24) ? GL_BGR : GL_LUMINANCE;
+                        m_Textures[i] = new CTexture();
+                        m_Textures[i]->CreateFromData(pData, w, h, bpp, fmt, true);
+                        m_Textures[i]->SetSamplerObjectParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+                        m_Textures[i]->SetSamplerObjectParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                        m_Textures[i]->SetSamplerObjectParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
+                        m_Textures[i]->SetSamplerObjectParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
+                        FreeImage_Unload(dib);
+                        printf("Loaded embedded texture (%dx%d)\n", w, h);
+                    }
+                } else {
+                    std::string FullPath = Dir + "/" + Path.data;
+                    m_Textures[i] = new CTexture();
+                    if (!m_Textures[i]->Load(FullPath, true)) {
+                        fprintf(stderr, "Error loading mesh texture: %s\n", FullPath.c_str());
+                        delete m_Textures[i];
+                        m_Textures[i] = NULL;
+                        Ret = false;
+                    }
+                    else {
+                        printf("Loaded texture '%s'\n", FullPath.c_str());
+                    }
                 }
             }
         }
