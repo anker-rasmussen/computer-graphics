@@ -30,6 +30,11 @@ struct MaterialInfo
 };
 
 uniform LightInfo light1;
+uniform LightInfo light2;
+uniform LightInfo light3;
+uniform LightInfo light4;
+uniform LightInfo light5;
+uniform int numLights;
 uniform MaterialInfo material1;
 
 // Vertex attributes
@@ -43,21 +48,30 @@ out vec3 vColour;
 out vec2 vTexCoord;
 out vec3 worldPosition;
 
-vec3 PhongModel(vec4 eyePosition, vec3 eyeNorm)
+vec3 PhongModelSingle(vec4 eyePosition, vec3 eyeNorm, LightInfo light)
 {
-	vec3 s = normalize(vec3(light1.position - eyePosition));
+	vec3 s = normalize(vec3(light.position - eyePosition));
 	vec3 v = normalize(-eyePosition.xyz);
 	vec3 r = reflect(-s, eyeNorm);
 	vec3 n = eyeNorm;
-	vec3 ambient = light1.La * material1.Ma;
+	vec3 ambient = light.La * material1.Ma;
 	float sDotN = max(dot(s, n), 0.0f);
-	vec3 diffuse = light1.Ld * material1.Md * sDotN;
+	vec3 diffuse = light.Ld * material1.Md * sDotN;
 	vec3 specular = vec3(0.0f);
 	float eps = 0.000001f;
 	if (sDotN > 0.0f)
-		specular = light1.Ls * material1.Ms * pow(max(dot(r, v), 0.0f), material1.shininess + eps);
-
+		specular = light.Ls * material1.Ms * pow(max(dot(r, v), 0.0f), material1.shininess + eps);
 	return ambient + diffuse + specular;
+}
+
+vec3 PhongModel(vec4 eyePosition, vec3 eyeNorm)
+{
+	vec3 colour = PhongModelSingle(eyePosition, eyeNorm, light1);
+	if (numLights >= 2) colour += PhongModelSingle(eyePosition, eyeNorm, light2);
+	if (numLights >= 3) colour += PhongModelSingle(eyePosition, eyeNorm, light3);
+	if (numLights >= 4) colour += PhongModelSingle(eyePosition, eyeNorm, light4);
+	if (numLights >= 5) colour += PhongModelSingle(eyePosition, eyeNorm, light5);
+	return colour;
 }
 
 void main()

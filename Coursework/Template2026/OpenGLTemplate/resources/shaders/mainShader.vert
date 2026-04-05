@@ -27,8 +27,13 @@ struct MaterialInfo
 };
 
 // Lights and materials passed in as uniform variables from client programme
-uniform LightInfo light1; 
-uniform MaterialInfo material1; 
+uniform LightInfo light1;
+uniform MaterialInfo material1;
+
+// Point lights for interior illumination
+const int MAX_POINT_LIGHTS = 4;
+uniform int numPointLights;
+uniform LightInfo pointLights[MAX_POINT_LIGHTS];
 
 // Layout of vertex attributes in VBO
 layout (location = 0) in vec3 inPosition;
@@ -60,7 +65,26 @@ vec3 PhongModel(vec4 eyePosition, vec3 eyeNorm)
 	
 
 	return ambient + diffuse + specular;
+}
 
+vec3 PointLightModel(vec4 eyePosition, vec3 eyeNorm, LightInfo light)
+{
+	vec3 toLight = vec3(light.position - eyePosition);
+	float dist = length(toLight);
+	vec3 s = normalize(toLight);
+	vec3 v = normalize(-eyePosition.xyz);
+	vec3 r = reflect(-s, eyeNorm);
+
+	float atten = 1.0 / (1.0 + 0.09 * dist + 0.032 * dist * dist);
+
+	vec3 ambient = light.La * material1.Ma * atten;
+	float sDotN = max(dot(s, eyeNorm), 0.0);
+	vec3 diffuse = light.Ld * material1.Md * sDotN * atten;
+	vec3 specular = vec3(0.0);
+	if (sDotN > 0.0)
+		specular = light.Ls * material1.Ms * pow(max(dot(r, v), 0.0), material1.shininess + 0.000001) * atten;
+
+	return ambient + diffuse + specular;
 }
 
 // This is the entry point into the vertex shader
@@ -79,6 +103,10 @@ void main()
 		
 	// Apply the Phong model to compute the vertex colour
 	vColour = PhongModel(vEyePosition, vEyeNorm);
+
+	// Accumulate point light contributions
+	for (int i = 0; i < numPointLights; i++)
+		vColour += PointLightModel(vEyePosition, vEyeNorm, pointLights[i]);
 	
 	// Pass through the texture coordinate
 	vTexCoord = inCoord;
