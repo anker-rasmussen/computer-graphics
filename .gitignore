@@ -17,3 +17,29 @@ build/
 # Coursework build directories
 /Coursework/Template2026/OpenGLTemplate/Debug/*
 /Coursework/Template2026/OpenGLTemplate/Release/*
+
+# Temp reference project build artifacts
+Coursework/temp/Template2026/Template2026/.vs/
+Coursework/temp/Template2026/Template2026/OpenGLTemplate/Debug/
+Coursework/temp/Template2026/Template2026/OpenGLTemplate/Release/
+Coursework/temp/Template2026/Template2026/OpenGLTemplate/bin/
+Coursework/temp/Template2026/Template2026/OpenGLTemplate/lib/
+Coursework/temp/Template2026/Template2026/OpenGLTemplate/x64/
+Coursework/temp/Template2026/Rasmussen_Anker_230022888.zip
+
+# Temp reference 3D model files (OBJ/MTL with .bak variants)
+Coursework/temp/Template2026/Template2026/OpenGLTemplate/resources/models/**/*.obj
+Coursework/temp/Template2026/Template2026/OpenGLTemplate/resources/models/**/*.obj.bak
+Coursework/temp/Template2026/Template2026/OpenGLTemplate/resources/models/**/*.mtl
+Coursework/temp/Template2026/Template2026/OpenGLTemplate/resources/models/**/*.mtl.bak
+Coursework/temp/Template2026/Template2026/OpenGLTemplate/solar_sail.mtl
+Coursework/temp/Template2026/Template2026/OpenGLTemplate/solar_sail.obj
+
+# Lab4Demo build artifacts
+Labs/Lab4Demo/Debug/
+Labs/Lab4Demo/Release/
+Labs/Lab4Demo/OpenGLTemplate/Debug/
+Labs/Lab4Demo/OpenGLTemplate/Release/
+Labs/Lab4Demo/OpenGLTemplate/lib/
+
+# Lecture PDFs (untracked)

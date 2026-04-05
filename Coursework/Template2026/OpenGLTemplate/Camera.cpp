@@ -176,7 +176,7 @@ void CCamera::SetPerspectiveProjectionMatrix(float fov, float aspectRatio, float
 // The the camera orthographic projection matrix to match the width and height passed in
 void CCamera::SetOrthographicProjectionMatrix(int width, int height)
 {
-	m_orthographicProjectionMatrix = glm::ortho(0.0f, float(width), 0.0f, float(height));
+	m_orthographicProjectionMatrix = glm::ortho(0.0f, float(width), 0.0f, float(height), -1.0f, 1.0f);
 }
 
 // Get the camera view matrix
