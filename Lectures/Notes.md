@@ -397,7 +397,257 @@ Render the 2D last! 2.5D text could be cool.
 
 
 
+# Lecture 8
+### Intermediate / Advanced Graphics 1
+
+### Toon shader with silhouette
+
+Improve the toon shader (from lecture 4) by adding a black silhouette outline. A silhouette is the outline of the object as observed from the viewer. It changes if the camera moves but not if a light source moves.
+
+To detect silhouette edges: compute the dot product of the *normal* and *viewing* vectors. If it is below a threshold, the fragment is on the edge -- set it to black:
+```glsl
+vec3 n = normalize(n);
+vec3 v = normalize(-p.xyz);
+float edgeMask = (dot(v, n) < 0.4) ? 0 : 1;
+vec3 toonColour = edgeMask * quantisedColour;
+```
+
+### Camera shake
+
+Perturbs the camera to simulate shake. Can be translation or rotation, but rotation is more effective since the skybox is stationary w.r.t. camera translations. Implement by computing small random rotation angles and linearly interpolating over time.
+
+### Environment mapping
+
+Texture mapping technique to simulate reflection or refraction by modelling the background environment. Uses a *cubemap texture* (six square 2D images forming a cube, like a skybox).
+
+- **Reflection mapping**: texture coordinates simulate light reflecting off the surface (e.g. Terminator 2 chrome)
+- **Refraction mapping**: texture coordinates simulate light refracting through the surface
+
+**Cubemap textures**: Single texture object of six square images. Loaded via `glTexImage2D` with `GL_TEXTURE_CUBE_MAP_POSITIVE_X` through `NEGATIVE_Z` targets. Accessed in fragment shader with `samplerCube` using 3D texture coordinates [s, t, r] interpreted as a direction vector from the cube centre.
+
+**Skybox rendering with cubemap**: Vertex shader passes `worldPosition = inPosition` (cube centred at origin). Fragment shader samples `texture(CubeMapTex, worldPosition)`.
+
+**Reflection implementation**: Use GLSL `reflect` function. The reflected vector must be in world coordinates. Two approaches:
+1. Reflect in world coordinates (needs model matrix separate from view matrix)
+2. Reflect in eye coordinates, then rotate back to world using the inverse view matrix
+
+```glsl
+// Vertex shader (eye-space approach)
+vec3 n = normalize(matrices.normalMatrix * inNormal);
+vec3 p = (matrices.modelViewMatrix * vec4(inPosition, 1.0f)).xyz;
+reflected = (matrices.inverseViewMatrix * vec4(reflect(p, n), 1)).xyz;
+// Fragment shader
+vOutputColour = texture(cubeMapTex, normalize(reflected));
+```
+
+**Refraction**: Light changes direction through materials with different refractive indices. Governed by Snell's law: sin(theta_r)/sin(theta_i) = n_i/n_r = eta. For air/glass, eta = 0.66. Uses GLSL `refract(p, n, eta)` instead of `reflect`.
+
+### Alpha maps
+
+Load an RGBA texture and `discard` fragments whose alpha is below a threshold. Creates complex-looking cutout shapes from simple geometry.
+
+### Lightmapping
+
+Stores pre-computed light intensity as a texture (*lightmap*). Applied via multi-texturing: lightmap * texture = lit texture. First used in Quake. Efficient for simulating many lights on static geometry. The pre-computation process is called *baking*.
+
+### Bump mapping (normal mapping)
+
+Simulates bumps and wrinkles by perturbing the surface normal per-fragment. The geometry itself is unchanged -- only the normals used in lighting calculations change. Implemented with multi-texturing: load a normal displacement texture (RGB values represent displacements in tangent space). During rendering, displaced normals are used for lighting.
+
+### Fog
+
+Adds realism and prevents geometry from popping into view at the far clip plane. Computed in the fragment shader by blending scene colour **S** with fog colour **F**:
+**C** = w**S** + (1-w)**F**
+
+Fog models (w = fraction of original colour):
+- **Linear**: w = (f_e - d) / (f_e - f_s) where f_s/f_e are start/end fog distances
+- **Exponential**: w = exp(-rho * d)
+- **Square exponential**: w = exp(-(rho * d)^2)
+
+Where d = distance from camera (length of position in eye coordinates), rho = fog density. Use GLSL `mix(fogColour, sceneColour, w)` for blending.
+
+### Shadows
+
+Shadows enhance realism and illustrate spatial relationships. OpenGL implements a local lighting model (each primitive rendered independently), so shadows are not built-in. Terminology: *occluder* blocks light, *receiver* receives the shadow.
+
+**1. Planar shadows**: Project occluder primitives from the light source onto a receiver plane. Solve ray/plane intersection: given light **l**, vertex **v**, direction **q** = **v** - **l**, and plane ax + by + cz + d = 0, solve for t and compute projected point. This can be expressed as a *shadow matrix*: **M** = (**p** dot **l**)**I** - **l****p**^T. In GLM: `glm::dot(plane, lightPos) * glm::mat4(1) - glm::outerProduct(lightPos, plane)`.
+
+Issues: z-fighting (shadow coplanar with ground), shadow same colour as object. Fix 1: alpha blend a dark colour, disable depth testing -- but causes *multiple shadowing* (overlapping shadow polygons darken twice). Fix 2: use the stencil buffer to only darken each fragment once.
+
+Limitations of planar shadows: only works on planar receivers, no self-shadowing, anti-shadows.
+
+**2. Shadow mapping**: Models shadow casting as a *visibility problem* from the light source. Render a depth map from the light's perspective (the *shadow map*). Each pixel stores distance to nearest surface. When rendering the scene from the camera, compare each fragment's distance to the light against the shadow map value. If fragment distance > shadow map value, the fragment is in shadow (something closer is blocking the light). Allows self-shadows and shadows on arbitrary shapes. Accuracy limited by shadow map resolution.
+
+**3. Shadow volumes**: Construct polyhedral regions occluded from a light source using the stencil buffer. Divides scene into shadowed/unshadowed regions. Used famously in Doom 3.
+
+### Instanced rendering
+
+Efficiently render many instances of the same object (grass, trees, armies). Instead of looping N calls to `glDrawArrays`, use a single `glDrawArraysInstanced(GL_TRIANGLES, 0, m_iNumVertices, N)`. In the vertex shader, `gl_InstanceID` provides the instance index for per-instance transformations. Example: 1000 horses at 1581 triangles each -- instanced: 60 FPS, non-instanced: 40 FPS.
+
+### Anti-aliasing
+
+*Jaggies* are staircasing artefacts from limited framebuffer resolution (undersampling).
+
+**SSAA (Supersample anti-aliasing)**: Render to a higher resolution framebuffer, then downsample. Best quality but very costly (2x width+height = 4x fragments). Often unworkable for real-time.
+
+**MSAA (Multi-sample anti-aliasing)**: Generate several fragments with slightly different sub-pixel locations and average. Runs the fragment program *once* per rasterised fragment (much cheaper than SSAA). Sample locations are pseudo-random. Enable by allocating an MSAA buffer (`WGL_SAMPLE_BUFFERS_ARB`, `WGL_SAMPLES_ARB`) and calling `glEnable(GL_MULTISAMPLE)`. Example: 8x MSAA at 300 FPS vs no AA at 875 FPS.
+
+# Lecture 9
+### Intermediate / Advanced Graphics 2
+
+### Geometry shaders
+
+Geometry shaders sit between the vertex and fragment shader in the pipeline. They are optional.
+
+- Vertex shaders process one *vertex* at a time
+- Geometry shaders process one *primitive* at a time
+- Fragment shaders process one *fragment* at a time
+
+Vertex shaders are strictly one-in one-out: they cannot create new vertices or discard the vertex. Fragment shaders cannot access other fragments' info and cannot create new fragments (but can `discard`). Geometry shaders have access to **all vertices in the primitive** and can change the primitive type, create new primitives, and discard primitives. However, they can only output one primitive *type*.
+
+To use a geometry shader in the template, load it from file (`.geom`) and add it to the shader program alongside the `.vert` and `.frag` shaders.
+
+**Pass-through geometry shader structure:**
+
+Inputs from vertex shader are arrays (since the geometry shader sees all vertices of the primitive):
+```glsl
+in vec3 vColourPass[];
+in vec2 vTexCoordPass[];
+out vec3 vColour;
+out vec2 vTexCoord;
+layout(triangles) in;
+layout(triangle_strip, max_vertices = 3) out;
+```
+
+Input primitive types: `points`, `lines`, `triangles`, `lines_adjacency`, `triangles_adjacency`
+
+Output primitive types: `points`, `line_strip`, `triangle_strip`
+
+The main loop iterates over vertices, sets `gl_Position` from `gl_in[i].gl_Position`, copies attributes, calls `EmitVertex()`, then `EndPrimitive()`.
+
+**Duplication shader:** Duplicates geometry by emitting primitives twice (once normally, once translated). Requires `max_vertices = 6` for triangles. The vertex shader passes raw positions (`gl_Position = vec4(inPosition, 1.0f)`) and the geometry shader applies the modelview/projection matrices, allowing it to manipulate positions before projection.
+
+**Explosion shader:** Displaces each triangle along its face normal by an `explodeFactor` uniform. Computes the triangle normal from edge cross products, then offsets each vertex position before applying modelview/projection.
+
+**Porcupine rendering:** Renders a mesh twice -- once normally, then again with a geometry shader that draws lines along vertex normals (useful for debugging normals).
+
+### Computer animation
+
+Digital successor to traditional techniques (frame-by-frame, cel animation, stop motion).
+
+**Types:**
+- **Keyframing** -- animator specifies key poses, intermediate frames are interpolated (*tweening*). State can include position, shape, colour, etc.
+- **Motion capture (mocap)** -- captures real-world motion data (optical or magnetic/radio sensors) and transfers it to a digital model. Primary technique for game animation. Challenges: data acquisition, associating motion to geometry, editing data. Snippets are arranged so endpoints match for smooth transitions.
+- **Procedural** -- animation described algorithmically as a function of parameters (e.g. clock hands based on time, computational fluid dynamics)
+
+### Skeletal animation
+
+Articulated character models use a set of *bones* in a kinematic chain (typically 20-25 bones for a human). This is called skeletal (bone) animation, supported by MD3/MD5 formats.
+
+**Rigging** is building the animation controls -- defining the skeleton and associating it to the mesh. Bones provide a simple way to set poses at different keyframes.
+
+**Skinning** (skeletal subspace deformation): mesh vertices are the "skin" around bones. When the skeleton moves, the mesh deforms smoothly. Near joints, vertices are associated with multiple bones using weights (e.g. V2 = 0.75 of B1, 0.25 of B2).
+
+### Kinematics
+
+**Forward kinematics:** Animator specifies joint angles, bone positions are computed. For a 2-bone chain:
+- x = L1 cos(theta1) + L2 cos(theta1 + theta2)
+- y = L1 sin(theta1) + L2 sin(theta1 + theta2)
+
+Not always intuitive for animators.
+
+**Inverse kinematics:** Animator specifies where the end effector should be (e.g. hand position), and the system solves for joint angles. Generally requires solving complex non-linear equations -- typically done as an optimisation problem searching configuration space for minimum error. May have multiple global minima.
+
+### Particle animation
+
+Collections of point masses moving in 3D subject to rules (usually physics-based). Used for fire, smoke, sparks, magic effects, clouds.
+
+*Particle systems* consist of an *emitter* (source in 3D space setting initial velocity, colour, etc.). Particles change over time: fade out, change colour/alpha.
+
+**Minimum particle properties:** life, position, velocity. Optional: acceleration, size, rotation, colour sequence.
+
+**CPU vs GPU particles:**
+- CPU: simulate physics on CPU, apply transforms to modelview matrix, render each particle
+- GPU (direct): send initial position, start time, velocity; evaluate equation of motion in vertex shader
+- GPU (integration): numerical integration in vertex shader each time step
+
+### Ambient occlusion
+
+The ambient term in the lighting equation models indirect light. Standard ambient is constant everywhere. In reality, creases and gaps between objects *occlude* ambient light.
+
+AO introduces an *accessibility* factor measuring how much ambient light reaches a surface point:
+AO(p) = (1/pi) * integral over hemisphere of rho(p, omega) * n dot omega * d_omega
+
+**Baked AO:** Pre-calculate the AO map in a tool like Blender and store as a texture. Efficient at runtime but static -- doesn't account for other moving objects.
+
+**SSAO (Screen Space Ambient Occlusion):** Real-time AO, first used in Crysis. Uses Monte-Carlo sampling in a multi-pass approach:
+1. Render scene to texture
+2. Randomly sample the depth buffer around each point p; count closer samples that block light. Encode occlusion as [0, 1]
+3. Blur the result and darken fragments based on AO term
+
+### Framerate considerations
+
+Target 30-60 FPS. Too low breaks the illusion of motion; too high wastes frames beyond the monitor refresh rate. V-sync locks the frame rate to the display refresh.
+
+### Performance optimisation
+
+**Profile first** (e.g. NVidia Nsight Explorer).
+
+Hardware optimisations:
+- Use element arrays / triangle strips to reduce VBO vertices
+- Use built-in GLSL functions; eliminate unnecessary GLSL code
+- Move fragment shader computations to vertex shader where possible
+- Instanced rendering
+- Minimise state changes (use VAOs, texture samplers)
+
+Software optimisations:
+- Level of Detail (LOD) -- use lower-res meshes for distant objects. Tessellation shaders help here
+- Reduce multi-pass algorithm passes
+- Reduce/disable texture anisotropy
+- Cull objects outside view frustum
+- Enable backface culling
+
+### Forward vs deferred rendering
+
+**Forward rendering:** Lighting computed before the depth test. Every fragment (even occluded ones) evaluates the lighting equation for all lights. Wasteful with many lights.
+
+**Deferred rendering (deferred shading):** Two-pass approach:
+1. Render geometry to a *g-buffer* (colour, normals, depth, etc. for visible fragments only)
+2. Compute lighting only for fragments in the g-buffer
+
+Pros: scales better with many light sources. Cons: additional storage for the g-buffer; harder when different materials are needed.
+
+### Culling and clipping
+
+Primitives completely outside the view frustum can be *culled* (skipped). Partially visible primitives are *clipped*. The frustum has 6 planar sides.
+
+**Trivial acceptance test:** Use point/plane test (sign of **p** dot **v**). If all 8 vertices of an object's bounding box are in the negative half-space of any frustum plane, skip the entire object.
+
+For non-trivial cases (partial overlap), clipping algorithms like Cohen-Sutherland handle 2D/3D clipping.
+
+### Spatial organisation
+
+For large scenes, use spatial data structures to limit rendering to visible portions:
+
+**Octree:** Hierarchical tree partitioning 3D space. Start with a bounding box around all objects (root). Subdivide into 8 child voxels. Place objects in respective nodes. Recursively subdivide until MAX_LEVEL or node is empty. For visibility queries, only test nodes whose bounding boxes intersect the view frustum -- avoids testing distant/irrelevant objects.
+
+BSP trees, portals, and hierarchical occlusion maps are other approaches.
+
+### OOP with OpenGL
+
+OpenGL itself has no notion of OOP -- it's just a hardware interface. But C++ programmers can wrap 3D objects in classes with `initialise()`, `render()`, `translate()`, `rotate()`, `setcolor()` methods. A base `GraphicalObject` class with virtual `Render()` can be subclassed (e.g. `Triangle : public GraphicalObject`).
+
+### Scene graphs
+
+A tree data structure for scene representation. Node types:
+- **Shape**: 3D geometric objects
+- **Transform**: affect current transformation
+- **Property**: appearance, texture, etc.
+- **Group**: collection of sub-graphs
+
+The OpenGL state is updated during traversal (top to bottom, left to right). Parent operations propagate to all children. Useful for articulated figures -- transformation matrices concatenate at each group level.
+
 # CWK stuff:
 Make a more advanced shape and you'll get a better mark.
 
-The harder it is the better mark you get. 
+The harder it is the better mark you get.
