@@ -92,93 +92,43 @@ void CBridge::Create(float width, float height, float depth)
         }
     }
 
-    // Back wall (z = -hd, normal points inward +z) — arch with door cutout
+    // Back wall (z = -hd, normal points inward +z) — solid arch, no door
     {
         glm::vec3 n(0, 0, 1);
         int arcSegments = 16;
         float arcRadius = hw;
+        float wallTile = 2.0f;
 
-        // Door dimensions
-        float doorHW = 0.4f;  // half-width of door
-        float doorH = 1.8f;   // door height
-
-        // Left section: from left floor to left door edge, up the arc
-        // Right section: from right door edge to right floor, up the arc
-        // Top section: arc above the door
-
-        // Left wall panel (floor to door height, left edge to door left)
-        unsigned int lv0 = AddVertex(glm::vec3(-hw, 0, -hd), glm::vec2(0, 0), n);
-        unsigned int lv1 = AddVertex(glm::vec3(-doorHW, 0, -hd), glm::vec2(0.5f - doorHW/hw*0.5f, 0), n);
-        unsigned int lv2 = AddVertex(glm::vec3(-doorHW, doorH, -hd), glm::vec2(0.5f - doorHW/hw*0.5f, doorH/arcRadius), n);
-        unsigned int lv3 = AddVertex(glm::vec3(-hw, doorH, -hd), glm::vec2(0, doorH/arcRadius), n);
-        AddQuad(lv0, lv1, lv2, lv3);
-
-        // Right wall panel
-        unsigned int rv0 = AddVertex(glm::vec3(doorHW, 0, -hd), glm::vec2(0.5f + doorHW/hw*0.5f, 0), n);
-        unsigned int rv1 = AddVertex(glm::vec3(hw, 0, -hd), glm::vec2(1, 0), n);
-        unsigned int rv2 = AddVertex(glm::vec3(hw, doorH, -hd), glm::vec2(1, doorH/arcRadius), n);
-        unsigned int rv3 = AddVertex(glm::vec3(doorHW, doorH, -hd), glm::vec2(0.5f + doorHW/hw*0.5f, doorH/arcRadius), n);
-        AddQuad(rv0, rv1, rv2, rv3);
-
-        // Door lintel (top of door opening)
-        unsigned int tv0 = AddVertex(glm::vec3(-doorHW, doorH, -hd), glm::vec2(0.4f, 0.6f), n);
-        unsigned int tv1 = AddVertex(glm::vec3( doorHW, doorH, -hd), glm::vec2(0.6f, 0.6f), n);
-        unsigned int tv2 = AddVertex(glm::vec3( doorHW, doorH + 0.1f, -hd), glm::vec2(0.6f, 0.63f), n);
-        unsigned int tv3 = AddVertex(glm::vec3(-doorHW, doorH + 0.1f, -hd), glm::vec2(0.4f, 0.63f), n);
-        AddQuad(tv0, tv1, tv2, tv3);
-
-        // Upper arc section (above door height to top of arch)
-        // Fan from center point
-        unsigned int centerVert = AddVertex(glm::vec3(0, (arcRadius + doorH) * 0.5f, -hd), glm::vec2(0.5f, 0.75f), n);
-
-        std::vector<unsigned int> upperVerts;
-        // Start from left at door height
-        upperVerts.push_back(AddVertex(glm::vec3(-hw, doorH + 0.1f, -hd), glm::vec2(0, 0.63f), n));
-        // Arc above door height
+        // Build arch outline: right floor -> arc -> left floor
+        std::vector<unsigned int> outline;
+        outline.push_back(AddVertex(glm::vec3(hw, 0, -hd), glm::vec2(wallTile, 0), n));
         for (int i = 0; i <= arcSegments; i++) {
-            float a = (float)M_PI * (1.0f - (float)i / arcSegments);
+            float a = (float)M_PI * (float)i / arcSegments;
             float x = arcRadius * cosf(a);
             float y = arcRadius * sinf(a);
-            if (y < doorH + 0.1f) continue;  // skip below door lintel
-            float u = (float)i / arcSegments;
-            upperVerts.push_back(AddVertex(glm::vec3(x, y, -hd), glm::vec2(u, y/arcRadius), n));
+            float u = (1.0f - (float)i / arcSegments) * wallTile;
+            outline.push_back(AddVertex(glm::vec3(x, y, -hd), glm::vec2(u, y / arcRadius * wallTile), n));
         }
-        // End at right at door height
-        upperVerts.push_back(AddVertex(glm::vec3(hw, doorH + 0.1f, -hd), glm::vec2(1, 0.63f), n));
+        outline.push_back(AddVertex(glm::vec3(-hw, 0, -hd), glm::vec2(0, 0), n));
 
-        for (unsigned int i = 0; i < upperVerts.size() - 1; i++) {
-            AddTriangle(centerVert, upperVerts[i], upperVerts[i + 1]);
+        // Fan triangulation from first vertex
+        for (unsigned int i = 1; i < outline.size() - 1; i++) {
+            AddTriangle(outline[0], outline[i], outline[i + 1]);
         }
     }
 
     m_roomIndexCount = (unsigned int)m_indices.size();
 
-    // Front wall — smartmatter mirror (z = +hd, normal points inward -z)
-    // Curved arch shape, rendered separately for alpha control
+    // Front wall — viewport (z = +hd, normal points inward -z)
+    // Simple square for clean texture mapping
     m_mirrorIndexStart = (unsigned int)m_indices.size();
     {
         glm::vec3 n(0, 0, -1);
-        int arcSegments = 16;
-        float arcRadius = hw;
-
-        // Build outline: right floor -> arc -> left floor
-        std::vector<unsigned int> outline;
-        // Right floor corner
-        outline.push_back(AddVertex(glm::vec3(hw, 0, hd), glm::vec2(1, 0), n));
-        // Arc points from right (angle 0) to left (angle PI)
-        for (int i = 0; i <= arcSegments; i++) {
-            float a = (float)M_PI * (float)i / arcSegments;
-            float x = arcRadius * cosf(a);
-            float y = arcRadius * sinf(a);
-            outline.push_back(AddVertex(glm::vec3(x, y, hd), glm::vec2(1.0f - (float)i / arcSegments, 1), n));
-        }
-        // Left floor corner
-        outline.push_back(AddVertex(glm::vec3(-hw, 0, hd), glm::vec2(0, 0), n));
-
-        // Fan from first vertex (right floor)
-        for (unsigned int i = 1; i < outline.size() - 1; i++) {
-            AddTriangle(outline[0], outline[i + 1], outline[i]);
-        }
+        unsigned int v0 = AddVertex(glm::vec3(-hw, 0, hd), glm::vec2(0, 0), n);
+        unsigned int v1 = AddVertex(glm::vec3( hw, 0, hd), glm::vec2(1, 0), n);
+        unsigned int v2 = AddVertex(glm::vec3( hw, hw, hd), glm::vec2(1, 1), n);
+        unsigned int v3 = AddVertex(glm::vec3(-hw, hw, hd), glm::vec2(0, 1), n);
+        AddQuad(v3, v2, v1, v0);
     }
     m_mirrorIndexCount = (unsigned int)m_indices.size() - m_mirrorIndexStart;
 

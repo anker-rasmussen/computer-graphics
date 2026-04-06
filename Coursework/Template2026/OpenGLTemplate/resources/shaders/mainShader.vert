@@ -4,11 +4,11 @@
 uniform struct Matrices
 {
 	mat4 projMatrix;
-	mat4 modelViewMatrix; 
+	mat4 modelViewMatrix;
 	mat3 normalMatrix;
 } matrices;
 
-// Structure holding light information:  its position as well as ambient, diffuse, and specular colours
+// Light and material structs (used in fragment shader, declared here for interface)
 struct LightInfo
 {
 	vec4 position;
@@ -17,7 +17,6 @@ struct LightInfo
 	vec3 Ls;
 };
 
-// Structure holding material information:  its ambient, diffuse, and specular colours, and shininess
 struct MaterialInfo
 {
 	vec3 Ma;
@@ -26,89 +25,40 @@ struct MaterialInfo
 	float shininess;
 };
 
-// Lights and materials passed in as uniform variables from client programme
-uniform LightInfo light1;
-uniform MaterialInfo material1;
-
-// Point lights for interior illumination
-const int MAX_POINT_LIGHTS = 4;
-uniform int numPointLights;
-uniform LightInfo pointLights[MAX_POINT_LIGHTS];
+// Shadow mapping
+uniform mat4 lightSpaceMatrix;
+uniform mat4 spotLightSpaceMatrix;
 
 // Layout of vertex attributes in VBO
 layout (location = 0) in vec3 inPosition;
 layout (location = 1) in vec2 inCoord;
 layout (location = 2) in vec3 inNormal;
 
-// Vertex colour output to fragment shader -- using Gouraud (interpolated) shading
-out vec3 vColour;	// Colour computed using reflectance model
-out vec2 vTexCoord;	// Texture coordinate
+// Outputs to fragment shader
+out vec3 vEyeNorm;
+out vec3 vEyePos;
+out vec2 vTexCoord;
+out vec3 worldPosition;
+out vec4 vLightSpacePos;
+out vec4 vSpotLightSpacePos;
 
-out vec3 worldPosition;	// used for skybox
-
-// This function implements the Phong shading model
-// The code is based on the OpenGL 4.0 Shading Language Cookbook, Chapter 2, pp. 62 - 63, with a few tweaks. 
-// Please see Chapter 2 of the book for a detailed discussion.
-vec3 PhongModel(vec4 eyePosition, vec3 eyeNorm)
-{
-	vec3 s = normalize(vec3(light1.position - eyePosition));
-	vec3 v = normalize(-eyePosition.xyz);
-	vec3 r = reflect(-s, eyeNorm);
-	vec3 n = eyeNorm;
-	vec3 ambient = light1.La * material1.Ma;
-	float sDotN = max(dot(s, n), 0.0f);
-	vec3 diffuse = light1.Ld * material1.Md * sDotN;
-	vec3 specular = vec3(0.0f);
-	float eps = 0.000001f; // add eps to shininess below -- pow not defined if second argument is 0 (as described in GLSL documentation)
-	if (sDotN > 0.0f) 
-		specular = light1.Ls * material1.Ms * pow(max(dot(r, v), 0.0f), material1.shininess + eps);
-	
-
-	return ambient + diffuse + specular;
-}
-
-vec3 PointLightModel(vec4 eyePosition, vec3 eyeNorm, LightInfo light)
-{
-	vec3 toLight = vec3(light.position - eyePosition);
-	float dist = length(toLight);
-	vec3 s = normalize(toLight);
-	vec3 v = normalize(-eyePosition.xyz);
-	vec3 r = reflect(-s, eyeNorm);
-
-	float atten = 1.0 / (1.0 + 0.09 * dist + 0.032 * dist * dist);
-
-	vec3 ambient = light.La * material1.Ma * atten;
-	float sDotN = max(dot(s, eyeNorm), 0.0);
-	vec3 diffuse = light.Ld * material1.Md * sDotN * atten;
-	vec3 specular = vec3(0.0);
-	if (sDotN > 0.0)
-		specular = light.Ls * material1.Ms * pow(max(dot(r, v), 0.0), material1.shininess + 0.000001) * atten;
-
-	return ambient + diffuse + specular;
-}
-
-// This is the entry point into the vertex shader
 void main()
-{	
-
-// Save the world position for rendering the skybox
+{
+	// Save the world position for rendering the skybox
 	worldPosition = inPosition;
 
-	// Transform the vertex spatial position using 
-	gl_Position = matrices.projMatrix * matrices.modelViewMatrix * vec4(inPosition, 1.0f);
-	
-	// Get the vertex normal and vertex position in eye coordinates
-	vec3 vEyeNorm = normalize(matrices.normalMatrix * inNormal);
-	vec4 vEyePosition = matrices.modelViewMatrix * vec4(inPosition, 1.0f);
-		
-	// Apply the Phong model to compute the vertex colour
-	vColour = PhongModel(vEyePosition, vEyeNorm);
+	// Transform the vertex spatial position
+	gl_Position = matrices.projMatrix * matrices.modelViewMatrix * vec4(inPosition, 1.0);
 
-	// Accumulate point light contributions
-	for (int i = 0; i < numPointLights; i++)
-		vColour += PointLightModel(vEyePosition, vEyeNorm, pointLights[i]);
-	
+	// Eye-space normal and position for per-fragment lighting
+	vEyeNorm = normalize(matrices.normalMatrix * inNormal);
+	vec4 eyePos4 = matrices.modelViewMatrix * vec4(inPosition, 1.0);
+	vEyePos = eyePos4.xyz;
+
+	// Light-space positions for shadow mapping
+	vLightSpacePos = lightSpaceMatrix * vec4(inPosition, 1.0);
+	vSpotLightSpacePos = spotLightSpaceMatrix * vec4(inPosition, 1.0);
+
 	// Pass through the texture coordinate
 	vTexCoord = inCoord;
-} 
-	
+}

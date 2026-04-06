@@ -19,6 +19,9 @@
 #include <assert.h>
 #include <cstdio>
 #include <FreeImage.h>
+#ifndef _WIN32
+#include <dirent.h>
+#endif
 #include "OpenAssetImportMesh.h"
 
 COpenAssetImportMesh::MeshEntry::MeshEntry()
@@ -80,7 +83,7 @@ bool COpenAssetImportMesh::Load(const std::string& Filename)
     bool Ret = false;
     Assimp::Importer Importer;
 
-    const aiScene* pScene = Importer.ReadFile(Filename.c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs);
+    const aiScene* pScene = Importer.ReadFile(Filename.c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_PreTransformVertices);
 
     if (pScene) {
         Ret = InitFromScene(pScene, Filename);
@@ -209,6 +212,60 @@ bool COpenAssetImportMesh::InitMaterials(const aiScene* pScene, const std::strin
                     }
                 }
             }
+        }
+
+        // Try PBR BaseColor texture by material name convention (e.g. "bow_main" -> "*_bow_main_BaseColor.png")
+        if (!m_Textures[i]) {
+            aiString matName;
+            pMaterial->Get(AI_MATKEY_NAME, matName);
+            std::string name(matName.C_Str());
+
+            // Search for a file in the model directory matching *_<matname>_BaseColor.png
+            std::string searchSuffix = "_" + name + "_BaseColor.png";
+            // List files in Dir (use platform directory listing)
+#ifdef _WIN32
+            WIN32_FIND_DATAA fd;
+            HANDLE hFind = FindFirstFileA((Dir + "/*").c_str(), &fd);
+            if (hFind != INVALID_HANDLE_VALUE) {
+                do {
+                    std::string fname(fd.cFileName);
+                    if (fname.size() >= searchSuffix.size() &&
+                        fname.compare(fname.size() - searchSuffix.size(), searchSuffix.size(), searchSuffix) == 0) {
+                        std::string fullPath = Dir + "/" + fname;
+                        m_Textures[i] = new CTexture();
+                        if (m_Textures[i]->Load(fullPath, true)) {
+                            printf("Loaded PBR BaseColor: %s\n", fullPath.c_str());
+                        } else {
+                            delete m_Textures[i];
+                            m_Textures[i] = NULL;
+                        }
+                        break;
+                    }
+                } while (FindNextFileA(hFind, &fd));
+                FindClose(hFind);
+            }
+#else
+            DIR* dir = opendir(Dir.c_str());
+            if (dir) {
+                struct dirent* ent;
+                while ((ent = readdir(dir)) != NULL) {
+                    std::string fname(ent->d_name);
+                    if (fname.size() >= searchSuffix.size() &&
+                        fname.compare(fname.size() - searchSuffix.size(), searchSuffix.size(), searchSuffix) == 0) {
+                        std::string fullPath = Dir + "/" + fname;
+                        m_Textures[i] = new CTexture();
+                        if (m_Textures[i]->Load(fullPath, true)) {
+                            printf("Loaded PBR BaseColor: %s\n", fullPath.c_str());
+                        } else {
+                            delete m_Textures[i];
+                            m_Textures[i] = NULL;
+                        }
+                        break;
+                    }
+                }
+                closedir(dir);
+            }
+#endif
         }
 
         // Load a single colour texture matching the diffuse colour if no texture added

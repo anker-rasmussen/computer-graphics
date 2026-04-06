@@ -12,30 +12,9 @@ uniform struct Matrices
 const int MAX_BONES = 128;
 uniform mat4 boneMatrices[MAX_BONES];
 
-// Light and material (same as mainShader)
-struct LightInfo
-{
-	vec4 position;
-	vec3 La;
-	vec3 Ld;
-	vec3 Ls;
-};
-
-struct MaterialInfo
-{
-	vec3 Ma;
-	vec3 Md;
-	vec3 Ms;
-	float shininess;
-};
-
-uniform LightInfo light1;
-uniform LightInfo light2;
-uniform LightInfo light3;
-uniform LightInfo light4;
-uniform LightInfo light5;
-uniform int numLights;
-uniform MaterialInfo material1;
+// Shadow mapping
+uniform mat4 lightSpaceMatrix;
+uniform mat4 spotLightSpaceMatrix;
 
 // Vertex attributes
 layout (location = 0) in vec3 inPosition;
@@ -44,35 +23,12 @@ layout (location = 2) in vec3 inNormal;
 layout (location = 3) in ivec4 inBoneIDs;
 layout (location = 4) in vec4 inWeights;
 
-out vec3 vColour;
+out vec3 vEyeNorm;
+out vec3 vEyePos;
 out vec2 vTexCoord;
 out vec3 worldPosition;
-
-vec3 PhongModelSingle(vec4 eyePosition, vec3 eyeNorm, LightInfo light)
-{
-	vec3 s = normalize(vec3(light.position - eyePosition));
-	vec3 v = normalize(-eyePosition.xyz);
-	vec3 r = reflect(-s, eyeNorm);
-	vec3 n = eyeNorm;
-	vec3 ambient = light.La * material1.Ma;
-	float sDotN = max(dot(s, n), 0.0f);
-	vec3 diffuse = light.Ld * material1.Md * sDotN;
-	vec3 specular = vec3(0.0f);
-	float eps = 0.000001f;
-	if (sDotN > 0.0f)
-		specular = light.Ls * material1.Ms * pow(max(dot(r, v), 0.0f), material1.shininess + eps);
-	return ambient + diffuse + specular;
-}
-
-vec3 PhongModel(vec4 eyePosition, vec3 eyeNorm)
-{
-	vec3 colour = PhongModelSingle(eyePosition, eyeNorm, light1);
-	if (numLights >= 2) colour += PhongModelSingle(eyePosition, eyeNorm, light2);
-	if (numLights >= 3) colour += PhongModelSingle(eyePosition, eyeNorm, light3);
-	if (numLights >= 4) colour += PhongModelSingle(eyePosition, eyeNorm, light4);
-	if (numLights >= 5) colour += PhongModelSingle(eyePosition, eyeNorm, light5);
-	return colour;
-}
+out vec4 vLightSpacePos;
+out vec4 vSpotLightSpacePos;
 
 void main()
 {
@@ -97,9 +53,12 @@ void main()
 
 	gl_Position = matrices.projMatrix * matrices.modelViewMatrix * skinnedPos;
 
-	vec3 vEyeNorm = normalize(matrices.normalMatrix * skinnedNormal);
-	vec4 vEyePosition = matrices.modelViewMatrix * skinnedPos;
+	vEyeNorm = normalize(matrices.normalMatrix * skinnedNormal);
+	vec4 eyePos4 = matrices.modelViewMatrix * skinnedPos;
+	vEyePos = eyePos4.xyz;
 
-	vColour = PhongModel(vEyePosition, vEyeNorm);
+	vLightSpacePos = lightSpaceMatrix * skinnedPos;
+	vSpotLightSpacePos = spotLightSpaceMatrix * skinnedPos;
+
 	vTexCoord = inCoord;
 }

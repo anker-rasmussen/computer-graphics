@@ -13,10 +13,15 @@ CSkybox::~CSkybox()
 // Create a skybox of a given size with six textures
 void CSkybox::Create(float size)
 {
+	Create(size, "resources/skyboxes/jajdarkland1/flipped/", "jajdarkland1");
+}
 
-	m_cubemapTexture.Create("resources/skyboxes/jajdarkland1/flipped/jajdarkland1_rt.jpg", "resources/skyboxes/jajdarkland1/flipped/jajdarkland1_lf.jpg",
-		"resources/skyboxes/jajdarkland1/flipped/jajdarkland1_up.jpg", "resources/skyboxes/jajdarkland1/flipped/jajdarkland1_dn.jpg",
-		"resources/skyboxes/jajdarkland1/flipped/jajdarkland1_bk.jpg", "resources/skyboxes/jajdarkland1/flipped/jajdarkland1_ft.jpg");
+void CSkybox::Create(float size, const string& dir, const string& prefix)
+{
+	m_cubemapTexture.Create(
+		(dir + prefix + "_rt.jpg").c_str(), (dir + prefix + "_lf.jpg").c_str(),
+		(dir + prefix + "_up.jpg").c_str(), (dir + prefix + "_dn.jpg").c_str(),
+		(dir + prefix + "_bk.jpg").c_str(), (dir + prefix + "_ft.jpg").c_str());
 
 	
 	

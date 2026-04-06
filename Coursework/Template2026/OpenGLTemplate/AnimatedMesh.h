@@ -73,6 +73,7 @@ public:
     float GetCurrentTime() const { return m_currentTime; }
     void SetCurrentTime(float t) { m_currentTime = t; }
     void SetLooping(bool loop) { m_looping = loop; }
+    void SetInPlace(bool inPlace) { m_inPlace = inPlace; }
 
 private:
     struct MeshEntry {
@@ -127,6 +128,7 @@ private:
     std::string m_currentAnimation;
     float m_currentTime;
     bool m_looping;
+    bool m_inPlace;  // strip root XZ translation for in-place animation
 
     // Final bone matrices sent to shader
     glm::mat4 m_boneMatrices[MAX_BONES];

@@ -20,7 +20,7 @@ static glm::mat4 AiToGlm(const aiMatrix4x4& m)
 
 CAnimatedMesh::CAnimatedMesh()
     : m_vao(0), m_vbo(0), m_ibo(0), m_numBones(0),
-      m_pScene(nullptr), m_currentTime(0.0f), m_looping(true)
+      m_pScene(nullptr), m_currentTime(0.0f), m_looping(true), m_inPlace(false)
 {
     for (int i = 0; i < MAX_BONES; i++)
         m_boneMatrices[i] = glm::mat4(1.0f);
@@ -396,6 +396,12 @@ void CAnimatedMesh::ReadNodeHierarchy(float animTime, const Animation& anim,
         glm::vec3 scaling = InterpolateScaling(animTime, ch);
         glm::quat rotation = InterpolateRotation(animTime, ch);
         glm::vec3 translation = InterpolatePosition(animTime, ch);
+
+        // Strip root XZ movement for in-place animation (keep Y for height)
+        if (m_inPlace && (pNode == m_pScene->mRootNode || pNode->mParent == m_pScene->mRootNode)) {
+            translation.x = 0.0f;
+            translation.z = 0.0f;
+        }
 
         glm::mat4 S = glm::scale(glm::mat4(1.0f), scaling);
         glm::mat4 R = glm::mat4_cast(rotation);
