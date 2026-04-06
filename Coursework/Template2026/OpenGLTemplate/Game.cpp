@@ -445,19 +445,26 @@ void Game::Initialise()
 
 	// Load Mieli (animated character)
 	m_pMieli = new CAnimatedMesh;
-	m_pMieli->Load("resources/models/Mieli/mieli.fbx");
-	m_pMieli->LoadAnimation("resources/models/Mieli/Sitting Talking.fbx", "sit");
+	m_pMieli->Load("resources/models/Mieli/mieli_multimaterial.fbx", true);
 	m_pMieli->LoadAnimation("resources/models/Mieli/idle.fbx", "idle");
-	m_pMieli->LoadAnimation("resources/models/Mieli/walking.fbx", "walk");
-	m_pMieli->LoadAnimation("resources/models/Mieli/running.fbx", "run");
+	m_pMieli->LoadAnimation("resources/models/Mieli/walking.fbx", "walking");
+	m_pMieli->LoadAnimation("resources/models/Mieli/running.fbx", "running");
+	m_pMieli->LoadAnimation("resources/models/Mieli/jump.fbx", "jump");
+	m_pMieli->LoadAnimation("resources/models/Mieli/sitting talking.fbx", "sitting_talking");
+	m_pMieli->LoadAnimation("resources/models/Mieli/left strafe.fbx", "left_strafe");
+	m_pMieli->LoadAnimation("resources/models/Mieli/left strafe walk.fbx", "left_strafe_walk");
+	m_pMieli->LoadAnimation("resources/models/Mieli/left turn.fbx", "left_turn");
+	m_pMieli->LoadAnimation("resources/models/Mieli/right strafe.fbx", "right_strafe");
+	m_pMieli->LoadAnimation("resources/models/Mieli/right strafe walk.fbx", "right_strafe_walk");
+	m_pMieli->LoadAnimation("resources/models/Mieli/right turn.fbx", "right_turn");
+	// Per-material textures loaded via InitMaterials fallback (texture/<name>_diff*.jpg)
+	m_pMieli->SetAnimation("sitting_talking");
 
 	m_pChen = new CAnimatedMesh;
 	m_pChen->Load("resources/models/chen/Salute.fbx");
 	m_pChen->LoadAnimation("resources/models/chen/Salute.fbx", "salute");
 	m_pChen->SetAnimation("salute");
 	m_pChen->SetLooping(false); // hold last frame after salute
-	m_pMieli->SetTexture("resources/models/Mieli/mieli_atlas.png");
-	m_pMieli->SetAnimation("sit");
 
 	// Create procedural bridge room (6m wide, 3m tall, 8m deep)
 	m_pBridge = new CBridge;
@@ -522,11 +529,11 @@ void Game::RenderShadowMap()
 	chairModel2 = glm::rotate(chairModel2, 3.2f, glm::vec3(0.0f, 1.0f, 0.0f));
 	chairModel2 = glm::scale(chairModel2, glm::vec3(0.5f));
 	glm::mat4 tableModel = glm::scale(glm::translate(glm::mat4(1.0f), bridgeOrigin + glm::vec3(0.0f, 0.0f, 1.0f)), glm::vec3(0.5f));
-	float jeanRotY = (m_cutscenePhase >= 1) ? 0.0f : 1.56f;
+	float jeanRotY = (m_cutscenePhase == 5) ? 3.14f : (m_cutscenePhase >= 1) ? 0.0f : 1.56f;
 	glm::mat4 jeanModel = glm::translate(glm::mat4(1.0f), bridgeOrigin + m_jeanPos);
 	jeanModel = glm::rotate(jeanModel, jeanRotY, glm::vec3(0.0f, 1.0f, 0.0f));
 	jeanModel = glm::scale(jeanModel, glm::vec3(0.005f));
-	float mieliRotY = (m_cutscenePhase >= 1) ? 0.0f : -1.56f;
+	float mieliRotY = (m_cutscenePhase == 5) ? 3.14f : (m_cutscenePhase >= 1) ? 0.0f : -1.56f;
 	glm::mat4 mieliModel = glm::translate(glm::mat4(1.0f), bridgeOrigin + m_mieliPos);
 	mieliModel = glm::rotate(mieliModel, mieliRotY, glm::vec3(0.0f, 1.0f, 0.0f));
 	mieliModel = glm::scale(mieliModel, glm::vec3(0.05f));
@@ -561,6 +568,7 @@ void Game::RenderShadowMap()
 		pSkinned->SetUniform("lightMVP", vp * jeanModel);
 		pSkinned->SetUniform("boneMatrices", m_pJean->GetBoneMatrices(), (int)m_pJean->GetNumBones());
 		m_pJean->Render();
+		pSkinned->SetUniform("lightMVP", vp * mieliModel);
 		pSkinned->SetUniform("lightMVP", vp * mieliModel);
 		pSkinned->SetUniform("boneMatrices", m_pMieli->GetBoneMatrices(), (int)m_pMieli->GetNumBones());
 		m_pMieli->Render();
@@ -1147,7 +1155,8 @@ void Game::Render()
 		pSkinProg->SetUniform("boneMatrices", m_pJean->GetBoneMatrices(), m_pJean->GetNumBones());
 
 		// Jean — position and facing based on cutscene phase
-		float jeanRotY = (m_cutscenePhase >= 1) ? 0.0f : 1.56f; // face viewport when walking, face right when sitting
+		// Phase 0: face each other. Phase 1-4: face viewport. Phase 5: face Chen (inward)
+		float jeanRotY = (m_cutscenePhase == 5) ? 3.14f : (m_cutscenePhase >= 1) ? 0.0f : 1.56f;
 		modelViewMatrixStack.Push();
 			modelViewMatrixStack.Translate(bridgeOrigin + m_jeanPos);
 			modelViewMatrixStack.Rotate(glm::vec3(0.0f, 1.0f, 0.0f), jeanRotY);
@@ -1156,10 +1165,9 @@ void Game::Render()
 			m_pJean->Render();
 		modelViewMatrixStack.Pop();
 
-		// Mieli — position and facing based on cutscene phase
-		float mieliRotY = (m_cutscenePhase >= 1) ? 0.0f : -1.56f;
+		// Mieli
+		float mieliRotY = (m_cutscenePhase == 5) ? 3.14f : (m_cutscenePhase >= 1) ? 0.0f : -1.56f;
 		pSkinProg->SetUniform("boneMatrices", m_pMieli->GetBoneMatrices(), m_pMieli->GetNumBones());
-
 		modelViewMatrixStack.Push();
 			modelViewMatrixStack.Translate(bridgeOrigin + m_mieliPos);
 			modelViewMatrixStack.Rotate(glm::vec3(0.0f, 1.0f, 0.0f), mieliRotY);
@@ -1168,7 +1176,8 @@ void Game::Render()
 			m_pMieli->Render();
 		modelViewMatrixStack.Pop();
 
-		// Chen — holographic projection on bridge center
+		// Chen — holographic projection, only during phase 5 monologue
+		if (m_cutscenePhase == 5) {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE); // additive for hologram glow
 		glDepthMask(GL_FALSE);
@@ -1193,6 +1202,7 @@ void Game::Render()
 		pSkinProg->SetUniform("material1.Ma", glm::vec3(0.5f));
 		pSkinProg->SetUniform("material1.Md", glm::vec3(0.5f));
 		pSkinProg->SetUniform("material1.Ms", glm::vec3(1.0f));
+		} // end Chen phase 5 only
 
 		pMainProgram->UseProgram();
 	}
@@ -1372,9 +1382,9 @@ void Game::Update()
 			glm::vec3 lookAt(20.0f, 25.0f, 150.0f);
 			m_pCamera->Set(camPos, lookAt, glm::vec3(0.0f, 1.0f, 0.0f));
 		} else if (m_cutscenePhase == 5) {
-			// Chen monologue: camera from viewport side, facing into bridge at Chen
-			glm::vec3 camPos = bo + glm::vec3(0.0f, 1.0f, 3.5f);   // in front of viewport wall
-			glm::vec3 lookAt = bo + glm::vec3(0.0f, 0.8f, -1.0f);  // looking back at Chen
+			// Chen monologue: camera from viewport side, looking back into bridge
+			glm::vec3 camPos = bo + glm::vec3(-3.0f, 1.0f, 3.5f);   // viewport side
+			glm::vec3 lookAt = bo + glm::vec3(2.0f, 0.0f, 0.0f);   // looking at Chen center
 			m_pCamera->Set(camPos, lookAt, glm::vec3(0.0f, 1.0f, 0.0f));
 		} else {
 			// Walk/viewport: follow from behind, looking toward the viewport
@@ -1417,33 +1427,22 @@ void Game::Update()
 			m_cutsceneTimer = 0.0f;
 			m_pJean->SetAnimation("walk");
 			m_pJean->SetInPlace(true);
-			m_pMieli->SetAnimation("walk");
+			m_pMieli->SetAnimation("walking");
 			m_pMieli->SetInPlace(true);
 		}
 
 		if (m_cutscenePhase == 1) {
 			m_cutsceneTimer += dt_s;
-			float walkDuration = 1.5f;
+			float walkDuration = 4.0f;
 			float t = glm::clamp(m_cutsceneTimer / walkDuration, 0.0f, 1.0f);
 
-			// Catmull-Rom spline: P0 (behind start) -> P1 (start) -> P2 (end) -> P3 (past end)
-			// Jean path: curves slightly inward then straightens toward viewport
-			glm::vec3 jP0(-1.2f, 0.0f, -3.5f);
-			glm::vec3 jP1(-1.0f, 0.0f, -2.2f);
-			glm::vec3 jP2(-0.5f, 0.0f, 3.0f);
-			glm::vec3 jP3(-0.3f, 0.0f, 4.5f);
+			glm::vec3 jeanStart(-1.0f, 0.0f, -2.2f);
+			glm::vec3 jeanEnd(-0.5f, 0.0f, 3.0f);
+			glm::vec3 mieliStart(1.0f, 0.0f, -2.2f);
+			glm::vec3 mieliEnd(0.5f, 0.0f, 3.0f);
 
-			// Mieli path: mirrors Jean
-			glm::vec3 mP0(1.2f, 0.0f, -3.5f);
-			glm::vec3 mP1(1.0f, 0.0f, -2.2f);
-			glm::vec3 mP2(0.5f, 0.0f, 3.0f);
-			glm::vec3 mP3(0.3f, 0.0f, 4.5f);
-
-			// Catmull-Rom interpolation: q(t) = 0.5 * ((2*P1) + (-P0+P2)*t + (2*P0-5*P1+4*P2-P3)*t^2 + (-P0+3*P1-3*P2+P3)*t^3)
-			float t2 = t * t;
-			float t3 = t2 * t;
-			m_jeanPos = 0.5f * ((2.0f*jP1) + (-jP0+jP2)*t + (2.0f*jP0-5.0f*jP1+4.0f*jP2-jP3)*t2 + (-jP0+3.0f*jP1-3.0f*jP2+jP3)*t3);
-			m_mieliPos = 0.5f * ((2.0f*mP1) + (-mP0+mP2)*t + (2.0f*mP0-5.0f*mP1+4.0f*mP2-mP3)*t2 + (-mP0+3.0f*mP1-3.0f*mP2+mP3)*t3);
+			m_jeanPos = glm::mix(jeanStart, jeanEnd, t);
+			m_mieliPos = glm::mix(mieliStart, mieliEnd, t);
 
 			if (t >= 1.0f) {
 				m_cutscenePhase = 2;
@@ -1555,7 +1554,7 @@ void Game::Update()
 
 			// Transition to Chen monologue when phase 4 dialogue is exhausted
 			if (m_phase4Line >= (int)m_phase4Script.size()) {
-				m_cutscenePhase = 45;
+				m_cutscenePhase = 5;
 				m_cutsceneTimer = 0.0f;
 				m_chenLine = 0;
 			}

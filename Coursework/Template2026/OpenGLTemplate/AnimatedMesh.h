@@ -59,7 +59,7 @@ public:
     CAnimatedMesh();
     ~CAnimatedMesh();
 
-    bool Load(const std::string& filename);
+    bool Load(const std::string& filename, bool collapsePivots = false);
     void SetTexture(const std::string& texturePath);
     bool LoadAnimation(const std::string& filename, const std::string& name);
     void SetAnimation(const std::string& name);
@@ -129,7 +129,12 @@ private:
     float m_currentTime;
     bool m_looping;
     bool m_inPlace;  // strip root XZ translation for in-place animation
+    bool m_collapsePivots;
 
     // Final bone matrices sent to shader
     glm::mat4 m_boneMatrices[MAX_BONES];
+    GLuint m_boneSSBO;
+
+public:
+    void UploadBoneMatrices(); // upload to SSBO binding 0
 };
