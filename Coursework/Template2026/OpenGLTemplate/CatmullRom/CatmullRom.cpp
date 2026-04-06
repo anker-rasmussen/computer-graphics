@@ -26,22 +26,34 @@ glm::vec3 CCatmullRom::Interpolate(glm::vec3 &p0, glm::vec3 &p1, glm::vec3 &p2, 
 
 void CCatmullRom::SetControlPoints()
 {
-	// Circular orbit around the sail at radius 80, height 40
-	float radius = 80.0f;
-	float height = 40.0f;
-	glm::vec3 centre(0.0f, 0.0f, 50.0f);
-
-	int numPoints = 8;
-	for (int i = 0; i < numPoints; i++) {
-		float angle = (float)i / numPoints * 2.0f * (float)M_PI;
-		glm::vec3 pt(
-			centre.x + radius * cosf(angle),
-			height,
-			centre.z + radius * sinf(angle)
-		);
-		m_controlPoints.push_back(pt);
+	// Nonlinear space track with S-curves, elevation changes, and varied radius
+	// Forms a large twisted loop through space
+	auto addPt = [&](float x, float y, float z) {
+		m_controlPoints.push_back(glm::vec3(x, y, z));
 		m_controlUpVectors.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
-	}
+	};
+
+	// Start: straight run out from the ship area
+	addPt(   0.0f,  40.0f,  150.0f);
+	addPt(  60.0f,  45.0f,  250.0f);
+	// Climbing right turn
+	addPt( 150.0f,  70.0f,  300.0f);
+	addPt( 200.0f,  90.0f,  250.0f);
+	// Descending S-curve
+	addPt( 180.0f,  60.0f,  150.0f);
+	addPt( 100.0f,  30.0f,   50.0f);
+	// Sharp left, diving low
+	addPt(  20.0f,  15.0f,  -50.0f);
+	addPt( -80.0f,  20.0f, -120.0f);
+	// Sweeping left arc at depth
+	addPt(-180.0f,  35.0f, -100.0f);
+	addPt(-220.0f,  55.0f,  -20.0f);
+	// Climbing back up, wide right
+	addPt(-200.0f,  80.0f,   80.0f);
+	addPt(-140.0f,  95.0f,  160.0f);
+	// Crest and descent back toward start
+	addPt( -60.0f,  85.0f,  200.0f);
+	addPt( -20.0f,  60.0f,  180.0f);
 }
 
 void CCatmullRom::UniformlySampleControlPoints(int numSamples)
@@ -263,6 +275,22 @@ bool CCatmullRom::Sample(float d, glm::vec3 &p, glm::vec3 &up)
 	p = glm::mix(m_centrelinePoints[i0], m_centrelinePoints[i1], frac);
 	up = glm::vec3(0.0f, 1.0f, 0.0f);
 
+	return true;
+}
+
+bool CCatmullRom::SampleTNB(float d, glm::vec3 &p, glm::vec3 &T, glm::vec3 &N, glm::vec3 &B)
+{
+	glm::vec3 up;
+	if (!Sample(d, p, up))
+		return false;
+
+	// Get a point slightly ahead for tangent direction
+	glm::vec3 pAhead, upAhead;
+	Sample(d + 0.5f, pAhead, upAhead);
+
+	T = glm::normalize(pAhead - p);
+	N = glm::normalize(glm::cross(T, glm::vec3(0.0f, 1.0f, 0.0f)));
+	B = glm::normalize(glm::cross(N, T));
 	return true;
 }
 

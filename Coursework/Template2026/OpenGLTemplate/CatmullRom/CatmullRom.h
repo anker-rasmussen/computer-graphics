@@ -25,6 +25,9 @@ public:
 	// Sample the path at a given distance, returning position and up vector
 	bool Sample(float d, glm::vec3 &p, glm::vec3 &up);
 
+	// Sample position + full TNB frame at distance d
+	bool SampleTNB(float d, glm::vec3 &p, glm::vec3 &T, glm::vec3 &N, glm::vec3 &B);
+
 	void Release();
 
 	float GetTotalLength() const { return m_totalLength; }
