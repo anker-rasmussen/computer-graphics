@@ -38,6 +38,7 @@ set(SOURCES
     OpenGLTemplate/Shaders.cpp
     OpenGLTemplate/Skybox.cpp
     OpenGLTemplate/Ship.cpp
+    OpenGLTemplate/ParticleSystem.cpp
     OpenGLTemplate/Sphere.cpp
     OpenGLTemplate/AnimatedMesh.cpp
     OpenGLTemplate/Bridge.cpp
