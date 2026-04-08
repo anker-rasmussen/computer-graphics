@@ -14,6 +14,13 @@ CAudio::CAudio()
 CAudio::~CAudio()
 {
 #ifdef USE_FMOD
+	// Release named sounds
+	for (auto& pair : m_sounds) {
+		if (pair.second) pair.second->release();
+	}
+	m_sounds.clear();
+	m_channels.clear();
+
 	if (m_FmodSystem)
 		m_FmodSystem->release();
 #endif
@@ -99,6 +106,69 @@ bool CAudio::PlayMusicStream()
 	return true;
 #else
 	return true;
+#endif
+}
+
+// --- Named multi-sound system ---
+
+bool CAudio::LoadSound(const std::string& name, const char* filename, bool looping)
+{
+#ifdef USE_FMOD
+	FMOD::Sound* sound = nullptr;
+	FMOD_MODE mode = looping ? (FMOD_DEFAULT | FMOD_LOOP_NORMAL) : FMOD_DEFAULT;
+	result = m_FmodSystem->createSound(filename, mode, 0, &sound);
+	FmodErrorCheck(result);
+	if (result != FMOD_OK) return false;
+	m_sounds[name] = sound;
+	return true;
+#else
+	(void)name; (void)filename; (void)looping;
+	return true;
+#endif
+}
+
+bool CAudio::PlaySound(const std::string& name, float volume)
+{
+#ifdef USE_FMOD
+	auto it = m_sounds.find(name);
+	if (it == m_sounds.end()) return false;
+	FMOD::Channel* channel = nullptr;
+	result = m_FmodSystem->playSound(FMOD_CHANNEL_FREE, it->second, false, &channel);
+	FmodErrorCheck(result);
+	if (result != FMOD_OK) return false;
+	if (channel && volume != 1.0f) channel->setVolume(volume);
+	m_channels[name] = channel;
+	return true;
+#else
+	(void)name; (void)volume;
+	return true;
+#endif
+}
+
+void CAudio::StopSound(const std::string& name)
+{
+#ifdef USE_FMOD
+	auto it = m_channels.find(name);
+	if (it != m_channels.end() && it->second) {
+		it->second->stop();
+		it->second = nullptr;
+	}
+#else
+	(void)name;
+#endif
+}
+
+bool CAudio::IsPlaying(const std::string& name)
+{
+#ifdef USE_FMOD
+	auto it = m_channels.find(name);
+	if (it == m_channels.end() || !it->second) return false;
+	bool playing = false;
+	it->second->isPlaying(&playing);
+	return playing;
+#else
+	(void)name;
+	return false;
 #endif
 }
 
