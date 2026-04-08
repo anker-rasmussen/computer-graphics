@@ -63,6 +63,12 @@ void CShip::CreateHull(float hullLength, float maxRadius, int slices, int stacks
 {
 	float widthScale = 1.2f;
 	float heightScale = 0.8f;
+
+	// Store for downstream geometry (nacelles, sails)
+	m_hullLength = hullLength;
+	m_hullMaxRadius = maxRadius;
+	m_widthScale = widthScale;
+	m_heightScale = heightScale;
 	glm::vec3 hullColour(0.75f, 0.75f, 0.8f);
 
 	unsigned int baseVertex = m_vertexCount;
@@ -121,14 +127,9 @@ void CShip::CreateNacelles(float maxNacelleRadius, float length, int count)
 	int stacks = 20;
 	float angles[] = { 35.0f, 125.0f, 215.0f, 305.0f };
 
-	float hullLength = 16.0f;
-	float maxRadius = 1.5f;
-	float widthScale = 1.2f;
-	float heightScale = 0.8f;
-
 	float ht = 0.85f;
-	float centerZ = hullLength * (0.5f - ht);
-	float hullR = maxRadius * HullProfile(ht);
+	float centerZ = m_hullLength * (0.5f - ht);
+	float hullR = m_hullMaxRadius * HullProfile(ht);
 	float cutT = 0.5f;
 
 	glm::vec3 nacelleColour(0.6f, 0.62f, 0.65f);
@@ -136,8 +137,8 @@ void CShip::CreateNacelles(float maxNacelleRadius, float length, int count)
 
 	for (int n = 0; n < count; n++) {
 		float angleRad = angles[n] * (float)M_PI / 180.0f;
-		float xOff = hullR * cosf(angleRad) * widthScale;
-		float yOff = hullR * sinf(angleRad) * heightScale;
+		float xOff = hullR * cosf(angleRad) * m_widthScale;
+		float yOff = hullR * sinf(angleRad) * m_heightScale;
 
 		float noseZ = centerZ + length * 0.5f;
 		float exhaustZ = centerZ - length * 0.5f;
@@ -196,6 +197,10 @@ void CShip::CreateNacelles(float maxNacelleRadius, float length, int count)
 				glm::vec2(0.5f), glm::vec3(0, 0, -1), exhaustColour);
 			AddTriangle(centerIdx, cn, ci);
 		}
+
+		// Store exhaust position and radius for thrust cones
+		m_nacelleExhaustPos.push_back(exhaustCenter);
+		m_nacelleExhaustRadius.push_back(maxNacelleRadius);
 	}
 }
 
@@ -204,23 +209,8 @@ void CShip::CreateNacelles(float maxNacelleRadius, float length, int count)
 // ---------------------------------------------------------------------------
 void CShip::CreateIonThrust(int count)
 {
-	float angles[] = { 35.0f, 125.0f, 215.0f, 305.0f };
-
-	float hullLength = 10.0f;
-	float maxRadius = 1.5f;
-	float widthScale = 1.2f;
-	float heightScale = 0.8f;
-	float nacelleLength = 3.5f;
-	float maxNacelleRadius = 0.55f;
-
-	float ht = 0.75f;
-	float centerZ = hullLength * (0.5f - ht);
-	float hullR = maxRadius * HullProfile(ht);
-	float exhaustZ = centerZ - nacelleLength * 0.5f;
-
 	// Thrust cone parameters
 	float thrustLength = 2.5f;
-	float thrustBaseR = maxNacelleRadius * 0.7f;
 	int slices = 12;
 	int stacks = 8;
 
@@ -228,13 +218,13 @@ void CShip::CreateIonThrust(int count)
 	glm::vec3 coreColour(0.3f, 0.8f, 1.0f);
 	glm::vec3 tipColour(0.05f, 0.15f, 0.4f);
 
-	for (int n = 0; n < count; n++) {
-		float angleRad = angles[n] * (float)M_PI / 180.0f;
-		float xOff = hullR * cosf(angleRad) * widthScale;
-		float yOff = hullR * sinf(angleRad) * heightScale;
-
-		glm::vec3 base(xOff, yOff, exhaustZ);
-		glm::vec3 tip(xOff, yOff, exhaustZ - thrustLength);
+	int numExhausts = glm::min(count, (int)m_nacelleExhaustPos.size());
+	for (int n = 0; n < numExhausts; n++) {
+		glm::vec3 exhaustPos = m_nacelleExhaustPos[n];
+		float xOff = exhaustPos.x;
+		float yOff = exhaustPos.y;
+		float exhaustZ = exhaustPos.z;
+		float thrustBaseR = m_nacelleExhaustRadius[n] * 0.7f;
 
 		unsigned int baseVertex = m_vertexCount;
 

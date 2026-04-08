@@ -48,6 +48,16 @@ private:
 	void CreateHull(float length, float maxRadius, int slices, int stacks);
 	void CreateNacelles(float radius, float length, int count=4);
 	void CreateIonThrust(int count=4);
+
+	// Hull geometry params — set by CreateHull, read by nacelles/sails
+	float m_hullLength;
+	float m_hullMaxRadius;
+	float m_widthScale;
+	float m_heightScale;
+
+	// Nacelle exhaust positions + radii, filled by CreateNacelles, read by CreateIonThrust
+	std::vector<glm::vec3> m_nacelleExhaustPos;
+	std::vector<float> m_nacelleExhaustRadius;
 	void CreateSolarSails(float sailHeight, float sailWidth, float curvature, int count=4);
 	void CreateCylinder(glm::vec3 from, glm::vec3 to, float r0, float r1, int slices, glm::vec3 colour);
 
