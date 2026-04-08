@@ -17,7 +17,8 @@ public:
     void RenderRoom();          // walls, floor, ceiling (opaque)
     void RenderFloor();         // floor only (for separate texture)
     void RenderWalls();         // walls + ceiling only
-    void RenderMirrorWall();    // front wall (separate for alpha control)
+    void RenderMirrorWall();    // front wall frame (surrounding the viewport)
+    void RenderViewport();      // viewport screen inset (for FBO texture)
     void Release();
 
     float m_wallTransparency;   // 0 = mirror, 1 = fully transparent
@@ -41,6 +42,8 @@ private:
     unsigned int m_roomIndexCount;
     unsigned int m_mirrorIndexStart;
     unsigned int m_mirrorIndexCount;
+    unsigned int m_viewportIndexStart;
+    unsigned int m_viewportIndexCount;
 
     unsigned int AddVertex(glm::vec3 pos, glm::vec2 uv, glm::vec3 normal);
     void AddTriangle(unsigned int i0, unsigned int i1, unsigned int i2);

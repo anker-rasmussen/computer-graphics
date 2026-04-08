@@ -43,6 +43,7 @@ set(SOURCES
     OpenGLTemplate/AnimatedMesh.cpp
     OpenGLTemplate/Bridge.cpp
     OpenGLTemplate/CatmullRom/CatmullRom.cpp
+    OpenGLTemplate/FrameBufferObject.cpp
     OpenGLTemplate/Texture.cpp
     OpenGLTemplate/VertexBufferObject.cpp
     OpenGLTemplate/VertexBufferObjectIndexed.cpp

@@ -7,6 +7,7 @@ CBridge::CBridge()
     : m_vao(0), m_vbo(0), m_ibo(0),
       m_floorIndexCount(0), m_wallIndexStart(0),
       m_roomIndexCount(0), m_mirrorIndexStart(0), m_mirrorIndexCount(0),
+      m_viewportIndexStart(0), m_viewportIndexCount(0),
       m_wallTransparency(0.0f)
 {}
 
@@ -119,8 +120,7 @@ void CBridge::Create(float width, float height, float depth)
 
     m_roomIndexCount = (unsigned int)m_indices.size();
 
-    // Front wall — viewport (z = +hd, normal points inward -z)
-    // Simple square for clean texture mapping
+    // Front wall — full quad with viewport.png (has built-in frame artwork)
     m_mirrorIndexStart = (unsigned int)m_indices.size();
     {
         glm::vec3 n(0, 0, -1);
@@ -131,6 +131,25 @@ void CBridge::Create(float width, float height, float depth)
         AddQuad(v3, v2, v1, v0);
     }
     m_mirrorIndexCount = (unsigned int)m_indices.size() - m_mirrorIndexStart;
+
+    // Viewport screen — inset quad matching the window opening in viewport.png
+    // Window opening is roughly 15–85% horizontal, 30–78% vertical in the image
+    float vpL = -hw + hw * 2.0f * 0.15;
+    float vpR = -hw + hw * 2.0f * 0.85f;
+    float vpB =  hw * 0.20f;
+    float vpT =  hw * 0.78f;
+    float nudge = -0.01f; // slight Z offset to render in front of the wall
+
+    m_viewportIndexStart = (unsigned int)m_indices.size();
+    {
+        glm::vec3 n(0, 0, -1);
+        unsigned int v0 = AddVertex(glm::vec3(vpL, vpB, hd + nudge), glm::vec2(0, 0), n);
+        unsigned int v1 = AddVertex(glm::vec3(vpR, vpB, hd + nudge), glm::vec2(1, 0), n);
+        unsigned int v2 = AddVertex(glm::vec3(vpR, vpT, hd + nudge), glm::vec2(1, 1), n);
+        unsigned int v3 = AddVertex(glm::vec3(vpL, vpT, hd + nudge), glm::vec2(0, 1), n);
+        AddQuad(v3, v2, v1, v0);
+    }
+    m_viewportIndexCount = (unsigned int)m_indices.size() - m_viewportIndexStart;
 
     // Upload to GPU
     glGenVertexArrays(1, &m_vao);
@@ -187,6 +206,14 @@ void CBridge::RenderMirrorWall()
     glBindVertexArray(m_vao);
     glDrawElements(GL_TRIANGLES, m_mirrorIndexCount, GL_UNSIGNED_INT,
                    (void*)(m_mirrorIndexStart * sizeof(unsigned int)));
+    glBindVertexArray(0);
+}
+
+void CBridge::RenderViewport()
+{
+    glBindVertexArray(m_vao);
+    glDrawElements(GL_TRIANGLES, m_viewportIndexCount, GL_UNSIGNED_INT,
+                   (void*)(m_viewportIndexStart * sizeof(unsigned int)));
     glBindVertexArray(0);
 }
 
