@@ -22,6 +22,7 @@ class CCatmullRom;
 class CAnimatedMesh;
 class CBridge;  // unused — keeping for now
 class CParticleSystem;
+class CFrameBufferObject;
 
 class Game {
 private:
@@ -94,13 +95,15 @@ private:
 	int m_dialogueLine;
 	int m_phase4Line;
 	int m_chenLine;
-	int m_cutscenePhase;    // 0-4=cutscene, 5=chen monologue, 6=escape
+	int m_cutscenePhase;    // -1=title, 0-4=cutscene, 5=chen monologue, 6=escape
 	float m_cutsceneTimer;  // time elapsed in current phase
 	glm::vec3 m_jeanPos, m_mieliPos;  // animated positions
 	float m_sobornostApproach; // 0.0–1.0 approach progress
 	bool m_shipArrived[4];     // cruiser 0,1,2 + warmind
 	float m_screenFlash;       // 0–1, fullscreen white flash intensity
 	float m_screenShake;       // 0–1, camera shake intensity
+	glm::vec2 m_shakeAngle;        // current shake rotation (pitch, yaw) in radians
+	glm::vec2 m_shakeAngleTarget;  // target shake rotation to lerp toward
 	static void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 
 	// Phase 5: escape gameplay
@@ -122,6 +125,10 @@ private:
 	glm::mat4 m_spotViewMatrix, m_spotProjMatrix;
 	static const int SHADOW_MAP_SIZE = 2048;
 
+	// Viewport render-to-texture (bridge front wall live view)
+	CFrameBufferObject *m_pViewportFBO;
+	void RenderViewportFBO();
+
 	// HUD sprite sheet overlay (phases 3–4)
 	CTexture *m_pHudSpriteSheet;
 	int m_hudFrameIndex;
@@ -132,4 +139,20 @@ private:
 	static const int HUD_TOTAL_FRAMES = 120;
 	static constexpr float HUD_FPS = 15.0f;
 	void RenderHudOverlay(float brightness);
+
+	// Title screen
+	bool m_titleScreen;
+	CTexture *m_pTitleTex;
+
+	// Audio tracking — last dialogue line index that triggered audio per phase
+	int m_lastAudioLine0;
+	int m_lastAudioLine4;
+	int m_lastAudioLine5;
+
+	// Periodic bridge ambience
+	float m_bridgeSoundTimer;
+
+	// Escape phase combat
+	float m_hitCooldown;
+	float m_hitTimer;
 };

@@ -47,6 +47,7 @@ Source code drawn from a number of sources and examples, including contributions
 #include "Bridge.h"
 #include "Texture.h"
 #include "ParticleSystem.h"
+#include "FrameBufferObject.h"
 
 // Constructor
 Game::Game()
@@ -73,6 +74,7 @@ Game::Game()
 	m_pCruiserMesh = NULL;
 	m_pWarmindMesh = NULL;
 	m_pParticleSystem = NULL;
+	m_pViewportFBO = NULL;
 	m_escapeTimer = 60.0f;
 	m_lateralOffset = 0.0f;
 	m_shipSpeed = 30.0f;
@@ -98,12 +100,20 @@ Game::Game()
 	m_hudFrameTimer = 0.0f;
 	m_hudBrightness = 0.0f;
 	m_dialogueLine = 0;
-	m_cutscenePhase = 0;
+	m_cutscenePhase = -1;  // start on title screen
+	m_titleScreen = true;
+	m_pTitleTex = NULL;
+	m_lastAudioLine0 = -1;
+	m_lastAudioLine4 = -1;
+	m_lastAudioLine5 = -1;
+	m_bridgeSoundTimer = 10.0f;
+	m_hitCooldown = 0.0f;
+	m_hitTimer = 0.0f;
 	m_cutsceneTimer = 0.0f;
 	m_jeanPos = glm::vec3(-1.0f, 0.0f, -2.2f);
 	m_mieliPos = glm::vec3(1.0f, 0.0f, -2.2f);
 	m_dialogueScript = {
-		{"Pellegrini", "The Engineer's gogols have found us. One of his chens are closing fast."},
+		{"Pellegrini", "We are tracking an unidentified object. One of the Engineer's chens, closing fast."},  // voice: tracking
 		{"Jean",       "A chen? Out here? Someone has been careless with our trajectory."},
 		{"Pellegrini", "Do not look at me, thief. I have kept my sisters blind for weeks."},
 		{"Mieli",      "It doesn't matter how they found us. Perhonen, can we outrun them?"},
@@ -113,23 +123,33 @@ Game::Game()
 	};
 	m_phase4Script = {
 		{"Perhonen",   "Three guberniya escorts in formation. And behind them..."},
-		{"Mieli",      "That is a Founder warmind. The Engineer's own."},
-		{"Jean",       "Look at the size of it. He really does want us dead."},
-		{"Perhonen",   "Correction: he wants you alive. The kill signatures are for me."},
+		{"Mieli",      "That is the chen's capital ship."},
+		{"Jean",       "Look at the size of it. It really does want us dead."},
+		{"Perhonen",   "Correction: it wants you alive. The kill signatures are for me."},
+		{"Pellegrini", "At last, to war."},  // voice: towar
 		{"Mieli",      "Then we run. Now."},
 	};
 	m_phase4Line = 0;
 	m_chenScript = {
-		{"Chen", "The conclave is ready to act."},
-		{"Chen", "Shadows that most cannot see sing songs that most cannot hear."},
-		{"Chen", "We bring war to our enemies."},
-		{"Chen", "Battle has commenced."},
+		{"Pellegrini", "Incoming transmission. Unknown origin."},           // voice: incoming
+		{"Perhonen",   "That is not a transmission. Something is projecting onto the bridge."},
+		{"Chen",       "The conclave is ready to act."},                    // voice: conclave
+		{"Jean",       "It's the chen. It's projecting directly onto our bridge."},
+		{"Chen",       "Shadows that most cannot see sing songs that most cannot hear."},  // voice: shadows
+		{"Mieli",      "Perhonen, block it. Cut the projection."},
+		{"Perhonen",   "I can't. It has bypassed every firewall I have."},
+		{"Chen",       "We bring war to our enemies."},                     // voice: bringwar
+		{"Jean",       "It means us. It means Perhonen."},
+		{"Chen",       "Battle has commenced."},                            // voice: commenced
+		{"Pellegrini", "The projection has ended. Make of that what you will."},
 	};
 	m_chenLine = 0;
 	m_sobornostApproach = 0.0f;
 	for (int i = 0; i < 4; i++) m_shipArrived[i] = false;
 	m_screenFlash = 0.0f;
 	m_screenShake = 0.0f;
+	m_shakeAngle = glm::vec2(0.0f);
+	m_shakeAngleTarget = glm::vec2(0.0f);
 	m_shipCharge = 0.0f;
 	m_sailUnfurl = 0.0f;
 	m_shipMode = 2; // start in combat mode (sails furled)
@@ -168,6 +188,7 @@ Game::~Game()
 	delete m_pWarmindMesh;
 	delete m_pHudSpriteSheet;
 	if (m_pParticleSystem) { m_pParticleSystem->Release(); delete m_pParticleSystem; }
+	delete m_pViewportFBO;
 	delete m_pAudio;
 
 	if (m_pShaderPrograms != NULL) {
@@ -301,6 +322,10 @@ void Game::Initialise()
 	pParticleProgram->AddShaderToProgram(&shShaders[14]);
 	pParticleProgram->LinkProgram();
 	m_pShaderPrograms->push_back(pParticleProgram);
+
+	// Viewport render-to-texture FBO (bridge front wall live view)
+	m_pViewportFBO = new CFrameBufferObject;
+	m_pViewportFBO->Create(1024, 1024);
 
 	// Create the skybox
 	// Skybox downloaded from http://www.akimbo.in/forum/viewtopic.php?f=10&t=9
@@ -493,11 +518,55 @@ void Game::Initialise()
 	m_pParticleSystem = new CParticleSystem;
 	m_pParticleSystem->Create((*m_pShaderPrograms)[7]);
 
-	// Initialise audio and play background music
+	// Title screen texture
+	m_pTitleTex = new CTexture;
+	m_pTitleTex->Load("resources/textures/title.png", false);
+	m_pTitleTex->SetSamplerObjectParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	m_pTitleTex->SetSamplerObjectParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	// Initialise audio and load all sounds
 	m_pAudio->Initialise();
-	m_pAudio->LoadEventSound("resources/audio/Boing.wav");					// Royalty free sound from freesound.org
-	m_pAudio->LoadMusicStream("resources/audio/DST-Garote.mp3");	// Royalty free music from http://www.nosoapradio.us/
-	m_pAudio->PlayMusicStream();
+
+	// Bridge ambience (one-shot, played periodically)
+	m_pAudio->LoadSound("bridge1", "resources/audio/bridge1.wav");
+	m_pAudio->LoadSound("bridge2", "resources/audio/bridge2.wav");
+	m_pAudio->LoadSound("bridge3", "resources/audio/bridge3.wav");
+	m_pAudio->LoadSound("shipflight", "resources/audio/shipflight.wav", true);
+
+	// SFX
+	m_pAudio->LoadSound("sensor", "resources/audio/sensor.wav");
+	m_pAudio->LoadSound("alert", "resources/audio/alert.wav");
+	m_pAudio->LoadSound("warpin", "resources/audio/warpin.wav");
+	m_pAudio->LoadSound("fire1", "resources/audio/fire1.wav");
+	m_pAudio->LoadSound("fire2", "resources/audio/fire2.wav");
+	m_pAudio->LoadSound("hit", "resources/audio/hit.wav");
+	m_pAudio->LoadSound("hologram1", "resources/audio/hologram1.wav");
+	m_pAudio->LoadSound("hologram2", "resources/audio/hologram2.wav");
+	m_pAudio->LoadSound("hologram3", "resources/audio/hologram3.wav");
+	m_pAudio->LoadSound("weapondwind", "resources/audio/weapondwind.wav");
+	m_pAudio->LoadSound("loss", "resources/audio/loss.wav");
+
+	// Pellegrini voice lines
+	m_pAudio->LoadSound("tracking", "resources/audio/trackingunidentifiedobject.wav");
+	m_pAudio->LoadSound("incoming", "resources/audio/incoming_transmission.wav");
+	m_pAudio->LoadSound("strangegame", "resources/audio/strangegame.wav");
+	m_pAudio->LoadSound("letslip", "resources/audio/let_slip_the_dogs.wav");
+	m_pAudio->LoadSound("towar", "resources/audio/atlast_to_war.wav");
+	m_pAudio->LoadSound("battlejoined", "resources/audio/battle_is_joined.wav");
+
+	// Chen voice lines
+	m_pAudio->LoadSound("conclave", "resources/audio/conclave_ready.wav");
+	m_pAudio->LoadSound("shadows", "resources/audio/shadows_sing_songs.wav");
+	m_pAudio->LoadSound("bringwar", "resources/audio/bring_war_to_enemies.wav");
+	m_pAudio->LoadSound("commenced", "resources/audio/battle_has_commenced.wav");
+
+	// Background music — loops softly throughout
+	m_pAudio->LoadSound("music", "resources/audio/gameaudio.mp3", true);
+	m_pAudio->PlaySound("music", 0.25f);
+
+	// Play first bridge sound for title screen
+	m_pAudio->PlaySound("bridge1", 0.4f);
+	m_bridgeSoundTimer = 10.0f;  // next bridge sound in ~10s
 }
 
 void Game::SetMatrices(CShaderProgram *prog, glm::mat4 modelView, glm::mat4 shadowBias, glm::mat4 spotShadowBias)
@@ -609,14 +678,166 @@ void Game::RenderShadowMap()
 	glViewport(0, 0, m_gameWindow.GetWidth(), m_gameWindow.GetHeight());
 }
 
+void Game::RenderViewportFBO()
+{
+	if (!m_cutsceneActive) return;
+
+	m_pViewportFBO->Bind();
+	glEnable(GL_DEPTH_TEST);
+
+	// Camera looking outward from bridge front wall (+Z direction)
+	glm::vec3 bridgeOrigin(0.0f, 25.0f, 60.0f);
+	glm::vec3 viewPos = bridgeOrigin + glm::vec3(0.0f, 1.0f, 4.0f);
+	glm::vec3 viewTarget = viewPos + glm::vec3(0.0f, 0.0f, 100.0f);
+	glm::mat4 viewMatrix = glm::lookAt(viewPos, viewTarget, glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 projMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.5f, 5000.0f);
+
+	CShaderProgram *pMainProgram = (*m_pShaderPrograms)[0];
+	pMainProgram->UseProgram();
+	pMainProgram->SetUniform("matrices.projMatrix", projMatrix);
+	pMainProgram->SetUniform("bUseTexture", true);
+	pMainProgram->SetUniform("sampler0", 0);
+	pMainProgram->SetUniform("numPointLights", 0);
+
+	// Dummy shadow (no shadow map needed for viewport view)
+	glm::mat4 identBias(1.0f);
+
+	// Light
+	glm::vec4 lightPos(-100, 100, -100, 1);
+	pMainProgram->SetUniform("light1.position", viewMatrix * lightPos);
+	pMainProgram->SetUniform("light1.La", glm::vec3(1.0f));
+	pMainProgram->SetUniform("light1.Ld", glm::vec3(1.0f));
+	pMainProgram->SetUniform("light1.Ls", glm::vec3(0.8f));
+
+	// Skybox
+	int cubeMapUnit = 10;
+	pMainProgram->SetUniform("CubeMapTex", cubeMapUnit);
+	pMainProgram->SetUniform("renderSkybox", true);
+	glm::mat4 skyMV = viewMatrix * glm::translate(glm::mat4(1.0f), viewPos);
+	SetMatrices(pMainProgram, skyMV, identBias, identBias);
+	m_pSkybox->Render(cubeMapUnit);
+	pMainProgram->SetUniform("renderSkybox", false);
+
+	// Terrain
+	pMainProgram->SetUniform("material1.Ma", glm::vec3(0.5f));
+	pMainProgram->SetUniform("material1.Md", glm::vec3(0.5f));
+	pMainProgram->SetUniform("material1.Ms", glm::vec3(0.0f));
+	pMainProgram->SetUniform("material1.shininess", 15.0f);
+	pMainProgram->SetUniform("bUseTexture", true);
+	glm::mat4 noBias(1.0f);
+	SetMatrices(pMainProgram, viewMatrix, noBias, noBias);
+	m_pPlanarTerrain->Render();
+
+	// Ship visible outside the viewport
+	pMainProgram->SetUniform("material1.Ma", glm::vec3(0.15f));
+	pMainProgram->SetUniform("material1.Md", glm::vec3(0.6f));
+	pMainProgram->SetUniform("material1.Ms", glm::vec3(1.0f));
+	pMainProgram->SetUniform("material1.shininess", 80.0f);
+
+	CShaderProgram *pHullProgram = (*m_pShaderPrograms)[3];
+	pHullProgram->UseProgram();
+	pHullProgram->SetUniform("matrices.projMatrix", projMatrix);
+	pHullProgram->SetUniform("sampler0", 0);
+	pHullProgram->SetUniform("charge", m_shipCharge);
+	pHullProgram->SetUniform("light1.position", viewMatrix * lightPos);
+	pHullProgram->SetUniform("light1.La", glm::vec3(1.0f));
+	pHullProgram->SetUniform("light1.Ld", glm::vec3(1.0f));
+	pHullProgram->SetUniform("light1.Ls", glm::vec3(0.8f));
+	pHullProgram->SetUniform("material1.Ma", glm::vec3(0.15f, 0.15f, 0.2f));
+	pHullProgram->SetUniform("material1.Md", glm::vec3(0.6f, 0.6f, 0.7f));
+	pHullProgram->SetUniform("material1.Ms", glm::vec3(1.0f, 1.0f, 1.2f));
+	pHullProgram->SetUniform("material1.shininess", 80.0f);
+	pHullProgram->SetUniform("bUseTexture", true);
+
+	// Ship hull at its world position, seen from bridge camera
+	glm::mat4 shipModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 25.0f, 50.0f));
+	shipModel = glm::scale(shipModel, glm::vec3(3.0f));
+	glm::mat4 shipMV = viewMatrix * shipModel;
+	pHullProgram->SetUniform("matrices.modelViewMatrix", shipMV);
+	pHullProgram->SetUniform("matrices.normalMatrix", glm::transpose(glm::inverse(glm::mat3(shipMV))));
+	m_pShip->RenderHull();
+
+	// Sails if unfurled
+	if (m_sailUnfurl > 0.01f) {
+		CShaderProgram *pSailProgram = (*m_pShaderPrograms)[2];
+		pSailProgram->UseProgram();
+		pSailProgram->SetUniform("matrices.projMatrix", projMatrix);
+		pSailProgram->SetUniform("sampler0", 0);
+		pSailProgram->SetUniform("unfurl", m_sailUnfurl);
+		pSailProgram->SetUniform("light1.position", viewMatrix * lightPos);
+		pSailProgram->SetUniform("light1.La", glm::vec3(0.6f));
+		pSailProgram->SetUniform("light1.Ld", glm::vec3(0.8f));
+		pSailProgram->SetUniform("light1.Ls", glm::vec3(0.5f));
+		pSailProgram->SetUniform("material1.Ma", glm::vec3(0.3f));
+		pSailProgram->SetUniform("material1.Md", glm::vec3(1.0f));
+		pSailProgram->SetUniform("material1.Ms", glm::vec3(1.5f));
+		pSailProgram->SetUniform("material1.shininess", 200.0f);
+		pSailProgram->SetUniform("bUseTexture", true);
+		pSailProgram->SetUniform("matrices.modelViewMatrix", shipMV);
+		pSailProgram->SetUniform("matrices.normalMatrix", glm::transpose(glm::inverse(glm::mat3(shipMV))));
+		m_pShip->RenderSails();
+	}
+
+	// Restore default framebuffer
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, m_gameWindow.GetWidth(), m_gameWindow.GetHeight());
+}
+
 void Game::Render()
 {
 	// --- Shadow map pass ---
 	RenderShadowMap();
 
+	// --- Viewport render-to-texture pass ---
+	RenderViewportFBO();
+
 	// Clear the buffers and enable depth testing (z-buffering)
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
+
+	// Title screen
+	if (m_titleScreen) {
+		int w = m_gameWindow.GetWidth();
+		int h = m_gameWindow.GetHeight();
+		CShaderProgram *fontProgram = (*m_pShaderPrograms)[1];
+		m_pCamera->SetOrthographicProjectionMatrix(w, h);
+		fontProgram->UseProgram();
+		glDisable(GL_DEPTH_TEST);
+		fontProgram->SetUniform("matrices.projMatrix", m_pCamera->GetOrthographicProjectionMatrix());
+
+		// Fullscreen title image
+		fontProgram->SetUniform("bFullColour", true);
+		fontProgram->SetUniform("vColour", glm::vec4(1.0f));
+		glBindVertexArray(m_dialogueVAO);
+		glActiveTexture(GL_TEXTURE0);
+		glBindSampler(0, 0);
+		m_pTitleTex->Bind(0);
+		fontProgram->SetUniform("sampler0", 0);
+		glm::mat4 mv = glm::scale(glm::mat4(1.0f), glm::vec3((float)w, (float)h, 1.0f));
+		fontProgram->SetUniform("matrices.modelViewMatrix", mv);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+		// Title text
+		fontProgram->SetUniform("bFullColour", false);
+		fontProgram->SetUniform("vColour", glm::vec4(0.9f, 0.75f, 0.3f, 1.0f));
+		int titleSize = h / 12;
+		string title = "DOOMSDAY CATALYST";
+		int titleW = m_pFtFont->GetTextWidth(title, titleSize);
+		m_pFtFont->Print(title, (w - titleW) / 2, h * 3 / 4, titleSize);
+
+		// Subtitle / prompt
+		float pulse = 0.5f + 0.5f * sinf((float)glfwGetTime() * 2.0f);
+		fontProgram->SetUniform("vColour", glm::vec4(0.7f, 0.7f, 0.8f, pulse));
+		int promptSize = h / 30;
+		string prompt = "Click to begin";
+		int promptW = m_pFtFont->GetTextWidth(prompt, promptSize);
+		m_pFtFont->Print(prompt, (w - promptW) / 2, h / 6, promptSize);
+
+		glEnable(GL_DEPTH_TEST);
+		DisplayFrameRate();
+		glfwSwapBuffers(m_gameWindow.GetWindow());
+		return;
+	}
 
 	// Phase 3: cut to black with HUD fading in
 	if (m_cutsceneActive && m_cutscenePhase == 3) {
@@ -922,8 +1143,8 @@ void Game::Render()
 
 			modelViewMatrixStack.Push();
 				modelViewMatrixStack.Translate(warshipPos);
-				modelViewMatrixStack.Rotate(glm::vec3(0.0f, 1.0f, 0.0f), 3.66f);
-				modelViewMatrixStack.Scale(1.8f);
+				modelViewMatrixStack.Rotate(glm::vec3(0.0f, 1.0f, 0.0f), 0.52f);
+				modelViewMatrixStack.Scale(2.0f);
 				SetMatrices(pMainProgram, modelViewMatrixStack.Top(), shadowBias, spotShadowBias);
 				m_pWarmindMesh->Render();
 			modelViewMatrixStack.Pop();
@@ -1207,7 +1428,7 @@ void Game::Render()
 		pMainProgram->UseProgram();
 	}
 
-	// Front wall — viewport texture (space view)
+	// Front wall — viewport.png frame + live FBO in the window opening
 	if (m_cutsceneActive) {
 		pMainProgram->UseProgram();
 		modelViewMatrixStack.Push();
@@ -1215,12 +1436,24 @@ void Game::Render()
 			modelViewMatrixStack.Translate(bridgeOriginVP);
 			SetMatrices(pMainProgram, modelViewMatrixStack.Top(), shadowBias, spotShadowBias);
 			pMainProgram->SetUniform("bUseTexture", true);
-			pMainProgram->SetUniform("material1.Ma", glm::vec3(2.0f));
+			pMainProgram->SetUniform("material1.Ma", glm::vec3(1.0f));
 			pMainProgram->SetUniform("material1.Md", glm::vec3(0.0f));
 			pMainProgram->SetUniform("material1.Ms", glm::vec3(0.0f));
 			pMainProgram->SetUniform("material1.shininess", 1.0f);
+
+			// Temporarily restore sun light so viewport textures render at full brightness
+			pMainProgram->SetUniform("light1.La", glm::vec3(1.0f));
+
+			// Full wall with viewport.png (frame artwork)
 			m_pViewportTex->Bind(0);
 			m_pBridge->RenderMirrorWall();
+
+			// Live view rendered on top of the window opening
+			m_pViewportFBO->BindTexture(0);
+			m_pBridge->RenderViewport();
+
+			// Kill sun light again for remaining bridge objects
+			pMainProgram->SetUniform("light1.La", glm::vec3(0.0f));
 		modelViewMatrixStack.Pop();
 	}
 
@@ -1373,13 +1606,24 @@ void Game::Update()
 			glm::vec3 camStart(-40.0f, 28.0f, 60.0f);
 			glm::vec3 camEnd(-45.0f, 27.0f, 65.0f);
 			glm::vec3 camPos = glm::mix(camStart, camEnd, dollyT);
-			// Screen shake — random offset that decays
-			if (m_screenShake > 0.01f) {
-				float shakeAmt = m_screenShake * 2.0f;
-				camPos.x += shakeAmt * ((float)(rand() % 200 - 100) / 100.0f);
-				camPos.y += shakeAmt * ((float)(rand() % 200 - 100) / 100.0f);
-			}
 			glm::vec3 lookAt(20.0f, 25.0f, 150.0f);
+			// Screen shake — rotation-based so skybox shakes too
+			if (m_screenShake > 0.01f) {
+				float maxAngle = glm::radians(m_screenShake * 3.0f); // up to 3 degrees
+				m_shakeAngleTarget = glm::vec2(
+					maxAngle * ((float)(rand() % 200 - 100) / 100.0f),
+					maxAngle * ((float)(rand() % 200 - 100) / 100.0f)
+				);
+				m_shakeAngle = glm::mix(m_shakeAngle, m_shakeAngleTarget, 0.3f);
+				glm::vec3 forward = glm::normalize(lookAt - camPos);
+				glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0, 1, 0)));
+				glm::vec3 up = glm::cross(right, forward);
+				glm::mat4 rot = glm::rotate(glm::mat4(1.0f), m_shakeAngle.x, right);
+				rot = glm::rotate(rot, m_shakeAngle.y, up);
+				lookAt = camPos + glm::vec3(rot * glm::vec4(forward, 0.0f)) * glm::length(lookAt - camPos);
+			} else {
+				m_shakeAngle = glm::vec2(0.0f);
+			}
 			m_pCamera->Set(camPos, lookAt, glm::vec3(0.0f, 1.0f, 0.0f));
 		} else if (m_cutscenePhase == 5) {
 			// Chen monologue: camera from viewport side, looking back into bridge
@@ -1419,8 +1663,61 @@ void Game::Update()
 		m_shipCharge = glm::max(m_shipCharge - 0.15f * dt_s, 0.0f);
 	}
 
+	// Periodic bridge ambience — plays during bridge scenes (title, phases 0-2, 5)
+	bool onBridge = m_titleScreen || (m_cutsceneActive && (m_cutscenePhase <= 2 || m_cutscenePhase == 5));
+	if (onBridge) {
+		m_bridgeSoundTimer -= dt_s;
+		if (m_bridgeSoundTimer <= 0.0f) {
+			string bridgeSounds[] = {"bridge1", "bridge2", "bridge3"};
+			m_pAudio->PlaySound(bridgeSounds[rand() % 3], 0.4f);
+			m_bridgeSoundTimer = 10.0f;
+		}
+	}
+
 	// Cutscene phase logic
 	if (m_cutsceneActive) {
+
+		// --- Audio triggers for phase 0 dialogue ---
+		if (m_cutscenePhase == 0 && m_dialogueLine != m_lastAudioLine0) {
+			m_lastAudioLine0 = m_dialogueLine;
+			if (m_dialogueLine == 0)
+				m_pAudio->PlaySound("tracking", 0.8f);  // Pellegrini: "We are tracking..."
+		}
+
+		// --- Audio triggers for phase 4 dialogue ---
+		if (m_cutscenePhase == 4 && m_phase4Line != m_lastAudioLine4) {
+			m_lastAudioLine4 = m_phase4Line;
+			if (m_phase4Line < (int)m_phase4Script.size() &&
+				m_phase4Script[m_phase4Line].speaker == "Pellegrini")
+				m_pAudio->PlaySound("towar", 0.8f);  // "At last, to war"
+		}
+
+		// --- Audio triggers for phase 5 (Chen monologue) ---
+		if (m_cutscenePhase == 5 && m_chenLine != m_lastAudioLine5) {
+			m_lastAudioLine5 = m_chenLine;
+			if (m_chenLine < (int)m_chenScript.size()) {
+				const string& speaker = m_chenScript[m_chenLine].speaker;
+				const string& text = m_chenScript[m_chenLine].text;
+				if (speaker == "Pellegrini" && text.find("Incoming") != string::npos) {
+					m_pAudio->PlaySound("incoming", 0.8f);
+				} else if (speaker == "Chen") {
+					// Play matching voice clip + hologram SFX
+					int holoIdx = rand() % 3;
+					string holoName = "hologram" + to_string(holoIdx + 1);
+					m_pAudio->PlaySound(holoName, 0.5f);
+
+					if (text.find("conclave") != string::npos)
+						m_pAudio->PlaySound("conclave", 0.9f);
+					else if (text.find("Shadows") != string::npos)
+						m_pAudio->PlaySound("shadows", 0.9f);
+					else if (text.find("bring war") != string::npos)
+						m_pAudio->PlaySound("bringwar", 0.9f);
+					else if (text.find("commenced") != string::npos)
+						m_pAudio->PlaySound("commenced", 0.9f);
+				}
+			}
+		}
+
 		if (m_cutscenePhase == 0 && m_dialogueLine >= (int)m_dialogueScript.size()) {
 			// Dialogue finished — start walk phase
 			m_cutscenePhase = 1;
@@ -1463,6 +1760,11 @@ void Game::Update()
 			}
 		}
 
+		// Phase 2→3 transition: stop bridge ambience, play alert
+		if (m_cutscenePhase == 3 && m_cutsceneTimer == 0.0f) {
+			m_pAudio->PlaySound("alert", 0.7f);
+		}
+
 		// Phase 3: black screen — HUD fades in
 		if (m_cutscenePhase == 3) {
 			m_cutsceneTimer += dt_s;
@@ -1478,6 +1780,7 @@ void Game::Update()
 			if (m_cutsceneTimer >= 1.0f) {
 				m_cutscenePhase = 4;
 				m_cutsceneTimer = 0.0f;
+				m_pAudio->PlaySound("shipflight", 0.4f);
 			}
 		}
 
@@ -1509,11 +1812,13 @@ void Game::Update()
 					m_pParticleSystem->Spawn(pos, 50);
 					m_screenFlash = 0.3f;
 					m_screenShake = 0.3f;
+					m_pAudio->PlaySound("warpin", 0.6f);
 				}
 			}
 			// Warmind arrival — massive blood-red explosion
 			if (!m_shipArrived[3] && m_cutsceneTimer >= arrivalTimes[3]) {
 				m_shipArrived[3] = true;
+				m_pAudio->PlaySound("warpin", 1.0f);
 				glm::vec3 wStart(900.0f, 27.0f, 1800.0f);
 				glm::vec3 wEnd(600.0f, 26.0f, 1200.0f);
 				glm::vec3 wPos = glm::mix(wStart, wEnd, ap);
@@ -1560,7 +1865,7 @@ void Game::Update()
 			}
 		}
 
-		// Phase 45: Chen hologram monologue on bridge
+		// Phase 5: Chen hologram monologue on bridge
 		if (m_cutscenePhase == 5) {
 			m_cutsceneTimer += dt_s;
 
@@ -1576,6 +1881,10 @@ void Game::Update()
 				m_escaped = false;
 				m_shipMode = 2;
 				m_shipCharge = 0.8f;
+				m_hitCooldown = 0.0f;
+				m_hitTimer = 3.0f;  // first hit after 3 seconds
+				// Stop bridge ambience
+				m_pAudio->StopSound("bridge1");
 			}
 		}
 	}
@@ -1588,6 +1897,9 @@ void Game::Update()
 			m_escapeTimer = 0.0f;
 			m_gameOver = true;
 			m_escaped = false;
+			m_pAudio->StopSound("shipflight");
+			m_pAudio->PlaySound("loss", 0.8f);
+			m_pAudio->PlaySound("strangegame", 0.9f);
 		}
 
 		// Auto-advance along track
@@ -1596,6 +1908,7 @@ void Game::Update()
 		if (m_currentDistance >= totalLen) {
 			m_gameOver = true;
 			m_escaped = true;
+			m_pAudio->StopSound("shipflight");
 		}
 
 		// Lateral movement: A/D
@@ -1958,6 +2271,14 @@ void Game::MouseButtonCallback(GLFWwindow* window, int button, int action, int m
 	(void)mods;
 	Game& game = Game::GetInstance();
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+		// Title screen — click to start
+		if (game.m_titleScreen) {
+			game.m_titleScreen = false;
+			game.m_cutscenePhase = 0;
+			game.m_pAudio->PlaySound("sensor", 0.6f);
+			return;
+		}
+
 		if (game.m_cutsceneActive && game.m_cutscenePhase == 0 && game.m_dialogueLine < (int)game.m_dialogueScript.size()) {
 			game.m_dialogueLine++;
 		} else if (game.m_cutsceneActive && game.m_cutscenePhase == 4 && game.m_phase4Line < (int)game.m_phase4Script.size()) {
