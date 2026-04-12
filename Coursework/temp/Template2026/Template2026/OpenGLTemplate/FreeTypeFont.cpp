@@ -1,7 +1,7 @@
 #include "FreeTypeFont.h"
-#include <minmax.h>
-
-#pragma comment(lib, "lib/freetype.lib")
+#include <algorithm>
+#include <cstdio>
+#include <cstdarg>
 
 CFreeTypeFont::CFreeTypeFont()
 {
@@ -35,17 +35,20 @@ void CFreeTypeFont::CreateChar(int index)
 
 	GLubyte* bData = new GLubyte[iTW*iTH];
 	// Copy glyph data and add dark pixels elsewhere
-	for (int ch = 0; ch < iTH; ch++) 
+	for (int ch = 0; ch < iTH; ch++)
 		for (int cw = 0; cw < iTW; cw++)
 			bData[ch*iTW+cw] = (ch >= iH || cw >= iW) ? 0 : pBitmap->buffer[(iH-ch-1)*iW+cw];
- 
-	// And create a texture from it
 
-	m_charTextures[index].CreateFromData(bData, iTW, iTH, 8, GL_DEPTH_COMPONENT, false);
-	m_charTextures[index].SetSamplerObjectParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	m_charTextures[index].SetSamplerObjectParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	m_charTextures[index].SetSamplerObjectParameter(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	m_charTextures[index].SetSamplerObjectParameter(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	// Create texture directly (learnopengl.com approach — no sampler objects)
+	glGenTextures(1, &m_charTextures[index]);
+	glBindTexture(GL_TEXTURE_2D, m_charTextures[index]);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, iTW, iTH, 0, GL_RED, GL_UNSIGNED_BYTE, bData);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	// Calculate glyph data
 	m_advX[index] = m_ftFace->glyph->advance.x>>6;
@@ -56,7 +59,7 @@ void CFreeTypeFont::CreateChar(int index)
 	m_bearingY[index] = m_ftFace->glyph->metrics.horiBearingY>>6;
 	m_charHeight[index] = m_ftFace->glyph->metrics.height>>6;
 
-	m_newLine = max(m_newLine, int(m_ftFace->glyph->metrics.height >> 6));
+	m_newLine = std::max(m_newLine, int(m_ftFace->glyph->metrics.height >> 6));
 
 	// Rendering data, texture coordinates are always the same, so now we waste a little memory
 	glm::vec2 vQuad[] =
@@ -80,13 +83,11 @@ void CFreeTypeFont::CreateChar(int index)
 // Loads an entire font with the given path sFile and pixel size iPXSize
 bool CFreeTypeFont::LoadFont(string file, int ipixelSize)
 {
-	BOOL bError = FT_Init_FreeType(&m_ftLib);
-	
+	int bError = FT_Init_FreeType(&m_ftLib);
+
 	bError = FT_New_Face(m_ftLib, file.c_str(), 0, &m_ftFace);
 	if(bError) {
-		char message[1024];
-		sprintf_s(message, "Cannot load font\n%s\n", file.c_str());
-		MessageBox(NULL, message, "Error", MB_ICONERROR);
+		fprintf(stderr, "Error: Cannot load font\n%s\n", file.c_str());
 		return false;
 	}
 	FT_Set_Pixel_Sizes(m_ftFace, ipixelSize, ipixelSize);
@@ -103,7 +104,7 @@ bool CFreeTypeFont::LoadFont(string file, int ipixelSize)
 
 	FT_Done_Face(m_ftFace);
 	FT_Done_FreeType(m_ftLib);
-	
+
 	m_vbo.UploadDataToGPU(GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2)*2, 0);
@@ -115,12 +116,54 @@ bool CFreeTypeFont::LoadFont(string file, int ipixelSize)
 // Loads a system font with given name (sName) and pixel size (iPXSize)
 bool CFreeTypeFont::LoadSystemFont(string name, int ipixelSize)
 {
-	char buf[512]; GetWindowsDirectory(buf, 512);
-	string sPath = buf;
-	sPath += "\\Fonts\\";
-	sPath += name;
+	// Try bundled fonts first
+	string bundledPath = "resources\\fonts\\" + name;
+	FILE* f = fopen(bundledPath.c_str(), "r");
+	if (f) {
+		fclose(f);
+		return LoadFont(bundledPath, ipixelSize);
+	}
 
-	return LoadFont(sPath, ipixelSize);
+	// Try common Linux font paths
+	const char* fontDirs[] = {
+		"/usr/share/fonts/truetype/msttcorefonts/",
+		"/usr/share/fonts/TTF/",
+		"/usr/share/fonts/truetype/",
+		"/usr/share/fonts/",
+		"/usr/local/share/fonts/",
+	};
+
+	for (const auto& dir : fontDirs) {
+		string fullPath = string(dir) + name;
+		f = fopen(fullPath.c_str(), "r");
+		if (f) {
+			fclose(f);
+			return LoadFont(fullPath, ipixelSize);
+		}
+	}
+
+	// Try fc-match to find a matching font
+	string cmd = "fc-match -f '%{file}' '" + name + "' 2>/dev/null";
+	FILE* pipe = popen(cmd.c_str(), "r");
+	if (pipe) {
+		char buf[512];
+		if (fgets(buf, sizeof(buf), pipe)) {
+			pclose(pipe);
+			string matched(buf);
+			if (!matched.empty()) {
+				f = fopen(matched.c_str(), "r");
+				if (f) {
+					fclose(f);
+					return LoadFont(matched, ipixelSize);
+				}
+			}
+		} else {
+			pclose(pipe);
+		}
+	}
+
+	fprintf(stderr, "Error: Cannot find system font: %s\n", name.c_str());
+	return false;
 }
 
 
@@ -131,6 +174,7 @@ void CFreeTypeFont::Print(string text, int x, int y, int pixelSize)
 		return;
 
 	glBindVertexArray(m_vao);
+	glBindSampler(0, 0); // unbind any stale sampler object left by 3D rendering
 	m_shaderProgram->SetUniform("sampler0", 0);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -149,7 +193,8 @@ void CFreeTypeFont::Print(string text, int x, int y, int pixelSize)
 		iCurX += m_bearingX[iIndex] * pixelSize / m_loadedPixelSize;
 		if(text[i] != ' ')
 		{
-			m_charTextures[iIndex].Bind();
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, m_charTextures[iIndex]);
 			glm::mat4 mModelView = glm::translate(glm::mat4(1.0f), glm::vec3(float(iCurX), float(iCurY), 0.0f));
 			mModelView = glm::scale(mModelView, glm::vec3(fScale));
 			m_shaderProgram->SetUniform("matrices.modelViewMatrix", mModelView);
@@ -169,7 +214,7 @@ void CFreeTypeFont::Render(int x, int y, int pixelSize, const char* text, ...)
 	char buf[512];
 	va_list ap;
 	va_start(ap, text);
-	vsprintf_s(buf, text, ap);
+	vsnprintf(buf, sizeof(buf), text, ap);
 	va_end(ap);
 	Print(buf, x, y, pixelSize);
 }
@@ -177,8 +222,7 @@ void CFreeTypeFont::Render(int x, int y, int pixelSize, const char* text, ...)
 // Deletes all font textures
 void CFreeTypeFont::ReleaseFont()
 {
-	for (int i = 0; i < 128; i++) 
-		m_charTextures[i].Release();
+	glDeleteTextures(128, m_charTextures);
 	m_vbo.Release();
 	glDeleteVertexArrays(1, &m_vao);
 }

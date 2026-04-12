@@ -3,8 +3,8 @@
 #include "Cubemap.h"
 
 
-#include "include\freeimage\FreeImage.h"
-#pragma comment(lib, "lib/FreeImage.lib")
+#include <FreeImage.h>
+#include <cstdio>
 
 
 bool CCubemap::LoadTexture(string filename, BYTE **bmpBytes, int &iWidth, int &iHeight)
@@ -16,7 +16,7 @@ bool CCubemap::LoadTexture(string filename, BYTE **bmpBytes, int &iWidth, int &i
 
 	if(fif == FIF_UNKNOWN) // If still unknown, try to guess the file format from the file extension
 		fif = FreeImage_GetFIFFromFilename(filename.c_str());
-	
+
 	if(fif == FIF_UNKNOWN) // If still unknown, return failure
 		return false;
 
@@ -24,9 +24,7 @@ bool CCubemap::LoadTexture(string filename, BYTE **bmpBytes, int &iWidth, int &i
 		dib = FreeImage_Load(fif, filename.c_str());
 
 	if(!dib) {
-		char message[1024];
-		sprintf_s(message, "Cannot load image\n%s\n", filename.c_str());
-		MessageBox(NULL, message, "Error", MB_ICONERROR);
+		fprintf(stderr, "Error: Cannot load image\n%s\n", filename.c_str());
 		return false;
 	}
 
@@ -39,20 +37,13 @@ bool CCubemap::LoadTexture(string filename, BYTE **bmpBytes, int &iWidth, int &i
 
 
 	// If somehow one of these failed (they shouldn't), return failure
-	if(bDataPointer == NULL || FreeImage_GetWidth(dib) == 0 || FreeImage_GetHeight(dib) == 0) 
+	if(bDataPointer == NULL || FreeImage_GetWidth(dib) == 0 || FreeImage_GetHeight(dib) == 0)
 		return false;
 	int test = FreeImage_GetDIBSize(dib);
+	(void)test;
 	*bmpBytes = new BYTE [iWidth*iHeight*bpp/8];
 	memcpy(*bmpBytes, bDataPointer, iWidth*iHeight*bpp/8);
-	
-	/*
-	GLenum format;
-	FreeImage_GetBPP(dib);
-	if(FreeImage_GetBPP(dib) == 32)format = GL_RGBA;
-	if(FreeImage_GetBPP(dib) == 24)format = GL_BGR;
-	if(FreeImage_GetBPP(dib) == 8)format = GL_LUMINANCE;
-	*/
-	
+
 	FreeImage_Unload(dib);
 	return true; // Success
 }

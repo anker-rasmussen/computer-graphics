@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Texture.h"
-#include "vertexBufferObject.h"
-#include "./include/glm/gtc/type_ptr.hpp"
+#include "VertexBufferObject.h"
+#include <glm/gtc/type_ptr.hpp>
 
 class CCubemap
 {

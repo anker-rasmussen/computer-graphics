@@ -76,11 +76,12 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>.\include\freetype;.\include\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>USE_FMOD;GLM_ENABLE_EXPERIMENTAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\include;.\include\freetype;.\include\assimp;.\include\freeimage;.\include\fmod_studio;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>.\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glew32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glew32.lib;opengl32.lib;FreeImage.lib;assimp.lib;freetype.lib;fmod_vc.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -89,11 +90,12 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>.\include\freetype;.\include\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>USE_FMOD;GLM_ENABLE_EXPERIMENTAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\include;.\include\freetype;.\include\assimp;.\include\freeimage;.\include\fmod_studio;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>.\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glew32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glew32.lib;opengl32.lib;FreeImage.lib;assimp.lib;freetype.lib;fmod_vc.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -104,12 +106,13 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>.\include\freetype;.\include\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>USE_FMOD;GLM_ENABLE_EXPERIMENTAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\include;.\include\freetype;.\include\assimp;.\include\freeimage;.\include\fmod_studio;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>glew32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glew32.lib;opengl32.lib;FreeImage.lib;assimp.lib;freetype.lib;fmod_vc.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>.\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -121,12 +124,13 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>.\include\freetype;.\include\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>USE_FMOD;GLM_ENABLE_EXPERIMENTAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\include;.\include\freetype;.\include\assimp;.\include\freeimage;.\include\fmod_studio;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;glew32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;glew32.lib;opengl32.lib;FreeImage.lib;assimp.lib;freetype.lib;fmod_vc.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>.\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -150,6 +154,13 @@
     <ClInclude Include="VertexBufferObject.h" />
     <ClInclude Include="VertexBufferObjectIndexed.h" />
     <ClInclude Include="CatmullRom.h" />
+    <ClInclude Include="AnimatedMesh.h" />
+    <ClInclude Include="Asteroid.h" />
+    <ClInclude Include="Bridge.h" />
+    <ClInclude Include="FrameBufferObject.h" />
+    <ClInclude Include="ParticleSystem.h" />
+    <ClInclude Include="TacticalGame.h" />
+    <ClInclude Include="TacticalGrid.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Audio.cpp" />
@@ -170,6 +181,13 @@
     <ClCompile Include="VertexBufferObject.cpp" />
     <ClCompile Include="VertexBufferObjectIndexed.cpp" />
     <ClCompile Include="CatmullRom.cpp" />
+    <ClCompile Include="AnimatedMesh.cpp" />
+    <ClCompile Include="Asteroid.cpp" />
+    <ClCompile Include="Bridge.cpp" />
+    <ClCompile Include="FrameBufferObject.cpp" />
+    <ClCompile Include="ParticleSystem.cpp" />
+    <ClCompile Include="TacticalGame.cpp" />
+    <ClCompile Include="TacticalGrid.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\mainShader.frag" />
@@ -178,6 +196,17 @@
     <None Include="resources\shaders\textShader.vert" />
     <None Include="resources\shaders\sailShader.frag" />
     <None Include="resources\shaders\sailShader.vert" />
+    <None Include="resources\shaders\hullShader.frag" />
+    <None Include="resources\shaders\hullShader.vert" />
+    <None Include="resources\shaders\skinningShader.frag" />
+    <None Include="resources\shaders\skinningShader.vert" />
+    <None Include="resources\shaders\shadowMap.frag" />
+    <None Include="resources\shaders\shadowMap.vert" />
+    <None Include="resources\shaders\shadowMapSkinned.vert" />
+    <None Include="resources\shaders\particleShader.frag" />
+    <None Include="resources\shaders\particleShader.vert" />
+    <None Include="resources\shaders\bloomShader.frag" />
+    <None Include="resources\shaders\bloomShader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -23,9 +23,9 @@
 #include <map>
 #include <vector>
 #include "include/gl/glew.h"
-#include <Importer.hpp>      // C++ importer interface
-#include <scene.h>       // Output data structure
-#include <PostProcess.h> // Post processing flags
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 #include "Common.h"
 #include "Texture.h"
@@ -64,7 +64,7 @@ private:
     void InitMesh(unsigned int Index, const aiMesh* paiMesh);
     bool InitMaterials(const aiScene* pScene, const std::string& Filename);
     void Clear();
-	
+
 
 #define INVALID_MATERIAL 0xFFFFFFFF
 
@@ -85,6 +85,3 @@ private:
     std::vector<CTexture*> m_Textures;
 	GLuint m_vao;
 };
-
-
-

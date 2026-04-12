@@ -13,8 +13,8 @@
 
 #include <stack>
 #include <vector>
-#include "include\glm\glm.hpp"
-#include "include\glm\gtc\type_ptr.hpp"
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace glutil
 {
@@ -78,7 +78,7 @@ namespace glutil
 
 		/**
 		\brief Restores the current matrix to the value of the most recently preserved matrix.
-		
+
 		This function does not affect the depth of the matrix stack.
 		**/
 		void Reset() { m_currMatrix = m_stack.top(); }
@@ -152,7 +152,7 @@ namespace glutil
 
 		/**
 		\brief Applies a matrix that transforms to a camera-space defined by a position, a target in the world, and an up direction.
-		
+
 		\param cameraPos The world-space position of the camera.
 		\param lookatPos The world-space position the camera should be facing. It should not be equal to \a cameraPos.
 		\param upDir The world-space direction vector that should be considered up. The generated matrix will be bad
@@ -221,7 +221,7 @@ namespace glutil
 
 		/**
 		\name Matrix Application
-		
+
 		These functions right-multiply a user-provided matrix by the current matrix; the result
 		becomes the new current matrix.
 		**/
@@ -232,7 +232,7 @@ namespace glutil
 
 		/**
 		\name Matrix Setting
-		
+
 		These functions directly set the value of the current matrix, replacing the old value.
 		Previously preserved matrices on the stack are unaffected.
 		**/

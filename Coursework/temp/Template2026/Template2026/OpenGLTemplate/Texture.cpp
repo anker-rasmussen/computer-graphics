@@ -1,9 +1,9 @@
 #include "Common.h"
 
-#include "texture.h"
+#include "Texture.h"
 
-#include "include\freeimage\FreeImage.h"
-#pragma comment(lib, "lib/FreeImage.lib")
+#include <FreeImage.h>
+#include <cstdio>
 
 CTexture::CTexture()
 {
@@ -12,7 +12,7 @@ CTexture::CTexture()
 CTexture::~CTexture()
 {}
 
-// Create a texture from the data stored in bData.  
+// Create a texture from the data stored in bData.
 void CTexture::CreateFromData(BYTE* data, int width, int height, int bpp, GLenum format, bool generateMipMaps)
 {
 	// Generate an OpenGL texture ID for this texture
@@ -45,7 +45,7 @@ bool CTexture::Load(string path, bool generateMipMaps)
 
 	if(fif == FIF_UNKNOWN) // If still unknown, try to guess the file format from the file extension
 		fif = FreeImage_GetFIFFromFilename(path.c_str());
-	
+
 	if(fif == FIF_UNKNOWN) // If still unknown, return failure
 		return false;
 
@@ -53,9 +53,7 @@ bool CTexture::Load(string path, bool generateMipMaps)
 		dib = FreeImage_Load(fif, path.c_str());
 
 	if(!dib) {
-		char message[1024];
-		sprintf_s(message, "Cannot load image\n%s\n", path.c_str());
-		MessageBox(NULL, message, "Error", MB_ICONERROR);
+		fprintf(stderr, "Error: Cannot load image\n%s\n", path.c_str());
 		return false;
 	}
 
@@ -64,15 +62,16 @@ bool CTexture::Load(string path, bool generateMipMaps)
 	// If somehow one of these failed (they shouldn't), return failure
 	if (pData == NULL || FreeImage_GetWidth(dib) == 0 || FreeImage_GetHeight(dib) == 0)
 		return false;
-	
+
 
 	GLenum format;
 	int bada = FreeImage_GetBPP(dib);
+	(void)bada;
 	if(FreeImage_GetBPP(dib) == 32)format = GL_BGRA;
 	if(FreeImage_GetBPP(dib) == 24)format = GL_BGR;
 	if(FreeImage_GetBPP(dib) == 8)format = GL_LUMINANCE;
 	CreateFromData(pData, FreeImage_GetWidth(dib), FreeImage_GetHeight(dib), FreeImage_GetBPP(dib), format, generateMipMaps);
-	
+
 	FreeImage_Unload(dib);
 
 	m_path = path;

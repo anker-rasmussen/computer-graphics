@@ -11,6 +11,7 @@ public:
 	CSkybox();
 	~CSkybox();
 	void Create(float size);
+	void Create(float size, const string& dir, const string& prefix);
 	void Render(int textureUnit);
 	void Release();
 

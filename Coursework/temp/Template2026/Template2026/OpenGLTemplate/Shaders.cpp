@@ -1,6 +1,7 @@
 #include "Common.h"
-#include "shaders.h"
+#include "Shaders.h"
 
+#include <cstdio>
 
 
 CShader::CShader()
@@ -16,16 +17,14 @@ bool CShader::LoadShader(string sFile, int iType)
 	vector<string> sLines;
 
 	if(!GetLinesFromFile(sFile, false, &sLines)) {
-		char message[1024];
-		sprintf_s(message, "Cannot load shader\n%s\n", sFile.c_str());
-		MessageBox(NULL, message, "Error", MB_ICONERROR);
+		fprintf(stderr, "Error: Cannot load shader\n%s\n", sFile.c_str());
 		return false;
 	}
 
 	const char** sProgram = new const char*[(int)sLines.size()];
-	for (int i = 0; i < (int)sLines.size(); i++) 
+	for (int i = 0; i < (int)sLines.size(); i++)
 		sProgram[i] = sLines[i].c_str();
-	
+
 	m_uiShader = glCreateShader(iType);
 
 	glShaderSource(m_uiShader, (int)sLines.size(), sProgram, NULL);
@@ -44,21 +43,21 @@ bool CShader::LoadShader(string sFile, int iType)
 		glGetShaderInfoLog(m_uiShader, 1024, &iLogLength, sInfoLog);
 		char sShaderType[64];
 		if (iType == GL_VERTEX_SHADER)
-			sprintf_s(sShaderType, "vertex shader");
+			snprintf(sShaderType, sizeof(sShaderType), "vertex shader");
 		else if (iType == GL_FRAGMENT_SHADER)
-			sprintf_s(sShaderType, "fragment shader");
+			snprintf(sShaderType, sizeof(sShaderType), "fragment shader");
 		else if (iType == GL_GEOMETRY_SHADER)
-			sprintf_s(sShaderType, "geometry shader");
+			snprintf(sShaderType, sizeof(sShaderType), "geometry shader");
 		else if (iType == GL_TESS_CONTROL_SHADER)
-			sprintf_s(sShaderType, "tesselation control shader");
+			snprintf(sShaderType, sizeof(sShaderType), "tesselation control shader");
 		else if (iType == GL_TESS_EVALUATION_SHADER)
-			sprintf_s(sShaderType, "tesselation evaluation shader");
+			snprintf(sShaderType, sizeof(sShaderType), "tesselation evaluation shader");
 		else
-			sprintf_s(sShaderType, "unknown shader type");
+			snprintf(sShaderType, sizeof(sShaderType), "unknown shader type");
 
-		sprintf_s(sFinalMessage, "Error in %s!\n%s\nShader file not compiled.  The compiler returned:\n\n%s", sShaderType, sFile.c_str(), sInfoLog);
+		snprintf(sFinalMessage, sizeof(sFinalMessage), "Error in %s!\n%s\nShader file not compiled.  The compiler returned:\n\n%s", sShaderType, sFile.c_str(), sInfoLog);
 
-		MessageBox(NULL, sFinalMessage, "Error", MB_ICONERROR);
+		fprintf(stderr, "%s\n", sFinalMessage);
 		return false;
 	}
 	m_iType = iType;
@@ -71,14 +70,13 @@ bool CShader::LoadShader(string sFile, int iType)
 // Loads a file into a vector of strings (vResult)
 bool CShader::GetLinesFromFile(string sFile, bool bIncludePart, vector<string>* vResult)
 {
-	FILE* fp;
-	fopen_s(&fp, sFile.c_str(), "rt");
+	FILE* fp = fopen(sFile.c_str(), "rt");
 	if(!fp)return false;
 
 	string sDirectory;
 	int slashIndex = -1;
 
-	for (int i = (int)sFile.size()-1; i == 0; i--)
+	for (int i = (int)sFile.size()-1; i >= 0; i--)
 	{
 		if(sFile[i] == '\\' || sFile[i] == '/')
 		{
@@ -173,14 +171,14 @@ bool CShaderProgram::LinkProgram()
 	int iLinkStatus;
 	glGetProgramiv(m_uiProgram, GL_LINK_STATUS, &iLinkStatus);
 
-	if (iLinkStatus == FALSE) 
+	if (iLinkStatus == FALSE)
 	{
 		char sInfoLog[1024];
 		char sFinalMessage[1536];
 		int iLogLength;
 		glGetProgramInfoLog(m_uiProgram, 1024, &iLogLength, sInfoLog);
-		sprintf_s(sFinalMessage, "Error! Shader program wasn't linked! The linker returned:\n\n%s", sInfoLog);
-		MessageBox(NULL, sFinalMessage, "Error", MB_ICONERROR);
+		snprintf(sFinalMessage, sizeof(sFinalMessage), "Error! Shader program wasn't linked! The linker returned:\n\n%s", sInfoLog);
+		fprintf(stderr, "%s\n", sFinalMessage);
 		return false;
 	}
 
