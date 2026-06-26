@@ -47,6 +47,8 @@ Source code drawn from a number of sources and examples, including contributions
 #include "Bridge.h"
 #include "Texture.h"
 #include "ParticleSystem.h"
+#include "TacticalGame.h"
+#include "Asteroid.h"
 #include "FrameBufferObject.h"
 
 // Constructor
@@ -73,8 +75,18 @@ Game::Game()
 	m_pTableMesh = NULL;
 	m_pCruiserMesh = NULL;
 	m_pWarmindMesh = NULL;
+	m_pMissileMesh = NULL;
 	m_pParticleSystem = NULL;
+	m_pTacticalGame = NULL;
+	m_pEscapeSpline = NULL;
+	m_pBloomSceneFBO = NULL;
+	m_pBloomPingFBO = NULL;
+	m_pBloomPongFBO = NULL;
+	m_bloomQuadVAO = 0;
 	m_pViewportFBO = NULL;
+	m_circleVAO = 0;
+	m_circleVBO = 0;
+	m_circleSegments = 64;
 	m_escapeTimer = 60.0f;
 	m_lateralOffset = 0.0f;
 	m_shipSpeed = 30.0f;
@@ -88,6 +100,7 @@ Game::Game()
 	m_portraitMieli = NULL;
 	m_portraitPellegrini = NULL;
 	m_portraitPerhonen = NULL;
+	m_portraitChen = NULL;
 	m_pFloorTex = NULL;
 	m_pWallTex = NULL;
 	m_pViewportTex = NULL;
@@ -151,7 +164,7 @@ Game::Game()
 	m_shakeAngle = glm::vec2(0.0f);
 	m_shakeAngleTarget = glm::vec2(0.0f);
 	m_shipCharge = 0.0f;
-	m_sailUnfurl = 0.0f;
+	m_sailUnfurl = 1.0f;
 	m_shipMode = 2; // start in combat mode (sails furled)
 	m_pHighResolutionTimer = NULL;
 	m_pAudio = NULL;
@@ -186,8 +199,14 @@ Game::~Game()
 	delete m_pTableMesh;
 	delete m_pCruiserMesh;
 	delete m_pWarmindMesh;
+	delete m_pMissileMesh;
 	delete m_pHudSpriteSheet;
 	if (m_pParticleSystem) { m_pParticleSystem->Release(); delete m_pParticleSystem; }
+	delete m_pTacticalGame;
+	if (m_pEscapeSpline) { m_pEscapeSpline->Release(); delete m_pEscapeSpline; }
+	delete m_pBloomSceneFBO;
+	delete m_pBloomPingFBO;
+	delete m_pBloomPongFBO;
 	delete m_pViewportFBO;
 	delete m_pAudio;
 
@@ -245,6 +264,10 @@ void Game::Initialise()
 	sShaderFileNames.push_back("shadowMapSkinned.vert");
 	sShaderFileNames.push_back("particleShader.vert");  // 13
 	sShaderFileNames.push_back("particleShader.frag");  // 14
+	sShaderFileNames.push_back("bloomShader.vert");     // 15
+	sShaderFileNames.push_back("bloomShader.frag");     // 16
+	sShaderFileNames.push_back("hologramShader.vert");  // 17
+	sShaderFileNames.push_back("hologramShader.frag");  // 18
 
 	for (int i = 0; i < (int) sShaderFileNames.size(); i++) {
 		string sExt = sShaderFileNames[i].substr((int) sShaderFileNames[i].size()-4, 4);
@@ -323,9 +346,78 @@ void Game::Initialise()
 	pParticleProgram->LinkProgram();
 	m_pShaderPrograms->push_back(pParticleProgram);
 
+	// Bloom shader [8]
+	CShaderProgram *pBloomProgram = new CShaderProgram;
+	pBloomProgram->CreateProgram();
+	pBloomProgram->AddShaderToProgram(&shShaders[15]);
+	pBloomProgram->AddShaderToProgram(&shShaders[16]);
+	pBloomProgram->LinkProgram();
+	m_pShaderPrograms->push_back(pBloomProgram);
+
+	// Hologram shader [9] -- bridge viewport ship schematic
+	CShaderProgram *pHologramProgram = new CShaderProgram;
+	pHologramProgram->CreateProgram();
+	pHologramProgram->AddShaderToProgram(&shShaders[17]);
+	pHologramProgram->AddShaderToProgram(&shShaders[18]);
+	pHologramProgram->LinkProgram();
+	m_pShaderPrograms->push_back(pHologramProgram);
+
+	// Bloom FBOs for tactical phase
+	m_pBloomSceneFBO = new CFrameBufferObject;
+	m_pBloomSceneFBO->Create(m_gameWindow.GetWidth(), m_gameWindow.GetHeight());
+	m_pBloomPingFBO = new CFrameBufferObject;
+	m_pBloomPingFBO->Create(m_gameWindow.GetWidth() / 2, m_gameWindow.GetHeight() / 2);
+	m_pBloomPongFBO = new CFrameBufferObject;
+	m_pBloomPongFBO->Create(m_gameWindow.GetWidth() / 2, m_gameWindow.GetHeight() / 2);
+
+	// Fullscreen quad VAO for bloom
+	{
+		float quadVerts[] = {
+			0,0, 0,0,  1,0, 1,0,  0,1, 0,1,
+			1,0, 1,0,  1,1, 1,1,  0,1, 0,1
+		};
+		glGenVertexArrays(1, &m_bloomQuadVAO);
+		glBindVertexArray(m_bloomQuadVAO);
+		GLuint vbo;
+		glGenBuffers(1, &vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVerts), quadVerts, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+	}
+
 	// Viewport render-to-texture FBO (bridge front wall live view)
+	// Sized ~2.4:1 to roughly match the wall opening aspect; split L/R into 640x512 panels.
 	m_pViewportFBO = new CFrameBufferObject;
-	m_pViewportFBO->Create(1024, 1024);
+	m_pViewportFBO->Create(1280, 512);
+
+	// Unit-circle outline VAO (used for sensor range rings)
+	// Vertex layout matches textShader: vec2 position, vec2 texCoord
+	{
+		std::vector<float> circleVerts;
+		circleVerts.reserve(m_circleSegments * 4);
+		for (int i = 0; i < m_circleSegments; i++) {
+			float a = 2.0f * (float)M_PI * (float)i / (float)m_circleSegments;
+			circleVerts.push_back(cosf(a));
+			circleVerts.push_back(sinf(a));
+			circleVerts.push_back(0.0f);
+			circleVerts.push_back(0.0f);
+		}
+		glGenVertexArrays(1, &m_circleVAO);
+		glBindVertexArray(m_circleVAO);
+		glGenBuffers(1, &m_circleVBO);
+		glBindBuffer(GL_ARRAY_BUFFER, m_circleVBO);
+		glBufferData(GL_ARRAY_BUFFER, circleVerts.size() * sizeof(float),
+		             circleVerts.data(), GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
+		                      (void*)(2 * sizeof(float)));
+		glBindVertexArray(0);
+	}
 
 	// Create the skybox
 	// Skybox downloaded from http://www.akimbo.in/forum/viewtopic.php?f=10&t=9
@@ -374,6 +466,7 @@ void Game::Initialise()
 	m_portraitMieli = new CTexture;
 	m_portraitPellegrini = new CTexture;
 	m_portraitPerhonen = new CTexture;
+	m_portraitChen = new CTexture;
 	auto loadPortrait = [](CTexture* tex, const char* path) {
 		if (!tex->Load(path, false)) {
 			fprintf(stderr, "Warning: %s not found\n", path);
@@ -389,6 +482,7 @@ void Game::Initialise()
 	loadPortrait(m_portraitPellegrini, "resources/textures/portrait_pellegrini.jpg");
 	// Perhonen portrait: butterfly metaphor (weshape.tech)
 	loadPortrait(m_portraitPerhonen, "resources/textures/portrait_perhonen.jpg");
+	loadPortrait(m_portraitChen, "resources/textures/portrait_chen.jpg");
 
 	// HUD sprite sheet (vecteezy.com — futuristic HUD screen overlay)
 	m_pHudSpriteSheet = new CTexture;
@@ -507,6 +601,9 @@ void Game::Initialise()
 	m_pCruiserMesh->Load("resources/models/cruiser.glb");
 	m_pWarmindMesh = new COpenAssetImportMesh;
 	m_pWarmindMesh->Load("resources/models/warmind.glb");
+	// missile.glb wasn't loading reliably; fall back to laser-line rendering
+	// (TacticalGame::RenderProjectiles checks m_pMissileMesh != NULL)
+	m_pMissileMesh = NULL;
 
 	// Create the Catmull-Rom circular camera path and track
 	m_pCatmullRom = new CCatmullRom;
@@ -517,6 +614,18 @@ void Game::Initialise()
 	// Particle system for explosions
 	m_pParticleSystem = new CParticleSystem;
 	m_pParticleSystem->Create((*m_pShaderPrograms)[7]);
+
+	// Create escape spline (long non-looping path) and tactical game
+	m_pEscapeSpline = new CCatmullRom;
+	m_pEscapeSpline->CreateCentrelineEscape();
+	m_pEscapeSpline->CreateOffsetCurves();
+	m_pEscapeSpline->CreateTrack("resources/textures/", "asteroids.jpg");
+
+	m_pTacticalGame = new CTacticalGame;
+	m_pTacticalGame->Init(m_pEscapeSpline, m_pShip, m_pCruiserMesh, m_pWarmindMesh,
+	                      m_pMissileMesh, m_pParticleSystem, m_pAudio,
+	                      m_portraitPerhonen, m_portraitMieli, m_portraitJean,
+	                      m_portraitChen, m_portraitPellegrini, m_dialogueVAO);
 
 	// Title screen texture
 	m_pTitleTex = new CTexture;
@@ -683,104 +792,364 @@ void Game::RenderViewportFBO()
 	if (!m_cutsceneActive) return;
 
 	m_pViewportFBO->Bind();
+
+	// FBO is 1280x512 with two 640x512 panels side by side (matches wall aspect).
+	const int fboW = 1280;
+	const int fboH = 512;
+	const int panelW = fboW / 2;
+	const float panelAspect = (float)panelW / (float)fboH;
+	// Continuous monotonic time (m_elapsedTime resets every 1s for FPS counting).
+	float t = (float)glfwGetTime();
+
+	if (m_cutscenePhase == 3) {
+		// Phase 3 transition: the smartmatter wall switches from a status
+		// schematic to a diffuse-glow preview of the inbound Sobornost fleet.
+		const float phase3Duration = 3.0f;
+		float t01 = glm::clamp(m_cutsceneTimer / phase3Duration, 0.0f, 1.0f);
+		float fleetAspect = (float)fboW / (float)fboH;
+
+		glClearColor(0.005f, 0.012f, 0.020f, 1.0f);
+		glViewport(0, 0, fboW, fboH);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		RenderDiffuseFleetPanel(t01, fleetAspect, t);
+	} else {
+		// Default: hologram + sensor split.
+		glClearColor(0.012f, 0.025f, 0.035f, 1.0f);
+		glViewport(0, 0, fboW, fboH);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// --- Left panel: rotating Perhonen hologram schematic ---
+		glViewport(0, 0, panelW, fboH);
+		RenderHologramPanel(panelAspect, t);
+
+		// --- Right panel: tactical sensor sweep ---
+		glViewport(panelW, 0, panelW, fboH);
+		RenderSensorPanel(t);
+	}
+
+	// Restore default framebuffer + viewport
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, m_gameWindow.GetWidth(), m_gameWindow.GetHeight());
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+}
+
+void Game::RenderHologramPanel(float aspect, float time)
+{
 	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_FALSE);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);  // additive: holographic glow
+	glDisable(GL_CULL_FACE);
 
-	// Camera looking outward from bridge front wall (+Z direction)
-	glm::vec3 bridgeOrigin(0.0f, 25.0f, 60.0f);
-	glm::vec3 viewPos = bridgeOrigin + glm::vec3(0.0f, 1.0f, 4.0f);
-	glm::vec3 viewTarget = viewPos + glm::vec3(0.0f, 0.0f, 100.0f);
-	glm::mat4 viewMatrix = glm::lookAt(viewPos, viewTarget, glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 projMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.5f, 5000.0f);
+	// Slow continuous orbit around the schematic.
+	float orbitYaw = time * 0.45f;
+	float camDist = 7.5f;
+	glm::vec3 eye(sinf(orbitYaw) * camDist, 1.6f, cosf(orbitYaw) * camDist);
+	glm::mat4 viewMatrix = glm::lookAt(eye, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0, 1, 0));
+	glm::mat4 projMatrix = glm::perspective(glm::radians(35.0f), aspect, 0.1f, 60.0f);
 
-	CShaderProgram *pMainProgram = (*m_pShaderPrograms)[0];
-	pMainProgram->UseProgram();
-	pMainProgram->SetUniform("matrices.projMatrix", projMatrix);
-	pMainProgram->SetUniform("bUseTexture", true);
-	pMainProgram->SetUniform("sampler0", 0);
-	pMainProgram->SetUniform("numPointLights", 0);
-
-	// Dummy shadow (no shadow map needed for viewport view)
-	glm::mat4 identBias(1.0f);
-
-	// Light
-	glm::vec4 lightPos(-100, 100, -100, 1);
-	pMainProgram->SetUniform("light1.position", viewMatrix * lightPos);
-	pMainProgram->SetUniform("light1.La", glm::vec3(1.0f));
-	pMainProgram->SetUniform("light1.Ld", glm::vec3(1.0f));
-	pMainProgram->SetUniform("light1.Ls", glm::vec3(0.8f));
-
-	// Skybox
-	int cubeMapUnit = 10;
-	pMainProgram->SetUniform("CubeMapTex", cubeMapUnit);
-	pMainProgram->SetUniform("renderSkybox", true);
-	glm::mat4 skyMV = viewMatrix * glm::translate(glm::mat4(1.0f), viewPos);
-	SetMatrices(pMainProgram, skyMV, identBias, identBias);
-	m_pSkybox->Render(cubeMapUnit);
-	pMainProgram->SetUniform("renderSkybox", false);
-
-	// Terrain
-	pMainProgram->SetUniform("material1.Ma", glm::vec3(0.5f));
-	pMainProgram->SetUniform("material1.Md", glm::vec3(0.5f));
-	pMainProgram->SetUniform("material1.Ms", glm::vec3(0.0f));
-	pMainProgram->SetUniform("material1.shininess", 15.0f);
-	pMainProgram->SetUniform("bUseTexture", true);
-	glm::mat4 noBias(1.0f);
-	SetMatrices(pMainProgram, viewMatrix, noBias, noBias);
-	m_pPlanarTerrain->Render();
-
-	// Ship visible outside the viewport
-	pMainProgram->SetUniform("material1.Ma", glm::vec3(0.15f));
-	pMainProgram->SetUniform("material1.Md", glm::vec3(0.6f));
-	pMainProgram->SetUniform("material1.Ms", glm::vec3(1.0f));
-	pMainProgram->SetUniform("material1.shininess", 80.0f);
-
-	CShaderProgram *pHullProgram = (*m_pShaderPrograms)[3];
-	pHullProgram->UseProgram();
-	pHullProgram->SetUniform("matrices.projMatrix", projMatrix);
-	pHullProgram->SetUniform("sampler0", 0);
-	pHullProgram->SetUniform("charge", m_shipCharge);
-	pHullProgram->SetUniform("light1.position", viewMatrix * lightPos);
-	pHullProgram->SetUniform("light1.La", glm::vec3(1.0f));
-	pHullProgram->SetUniform("light1.Ld", glm::vec3(1.0f));
-	pHullProgram->SetUniform("light1.Ls", glm::vec3(0.8f));
-	pHullProgram->SetUniform("material1.Ma", glm::vec3(0.15f, 0.15f, 0.2f));
-	pHullProgram->SetUniform("material1.Md", glm::vec3(0.6f, 0.6f, 0.7f));
-	pHullProgram->SetUniform("material1.Ms", glm::vec3(1.0f, 1.0f, 1.2f));
-	pHullProgram->SetUniform("material1.shininess", 80.0f);
-	pHullProgram->SetUniform("bUseTexture", true);
-
-	// Ship hull at its world position, seen from bridge camera
-	glm::mat4 shipModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 25.0f, 50.0f));
-	shipModel = glm::scale(shipModel, glm::vec3(3.0f));
+	// Ship is built at world scale ~16 long, scale it down to fit the panel.
+	glm::mat4 shipModel = glm::scale(glm::mat4(1.0f), glm::vec3(0.32f));
+	shipModel = glm::rotate(shipModel, glm::radians(-12.0f), glm::vec3(1, 0, 0));
 	glm::mat4 shipMV = viewMatrix * shipModel;
-	pHullProgram->SetUniform("matrices.modelViewMatrix", shipMV);
-	pHullProgram->SetUniform("matrices.normalMatrix", glm::transpose(glm::inverse(glm::mat3(shipMV))));
+	glm::mat3 shipNM = glm::transpose(glm::inverse(glm::mat3(shipMV)));
+
+	CShaderProgram *pHoloProgram = (*m_pShaderPrograms)[9];
+	pHoloProgram->UseProgram();
+	pHoloProgram->SetUniform("matrices.projMatrix", projMatrix);
+	pHoloProgram->SetUniform("matrices.modelViewMatrix", shipMV);
+	pHoloProgram->SetUniform("matrices.normalMatrix", shipNM);
+	pHoloProgram->SetUniform("time", time);
+	pHoloProgram->SetUniform("holoColour", glm::vec3(0.35f, 0.95f, 1.0f));
+	pHoloProgram->SetUniform("wipeAxisScale", 0.06f);
+
 	m_pShip->RenderHull();
 
-	// Sails if unfurled
 	if (m_sailUnfurl > 0.01f) {
-		CShaderProgram *pSailProgram = (*m_pShaderPrograms)[2];
-		pSailProgram->UseProgram();
-		pSailProgram->SetUniform("matrices.projMatrix", projMatrix);
-		pSailProgram->SetUniform("sampler0", 0);
-		pSailProgram->SetUniform("unfurl", m_sailUnfurl);
-		pSailProgram->SetUniform("light1.position", viewMatrix * lightPos);
-		pSailProgram->SetUniform("light1.La", glm::vec3(0.6f));
-		pSailProgram->SetUniform("light1.Ld", glm::vec3(0.8f));
-		pSailProgram->SetUniform("light1.Ls", glm::vec3(0.5f));
-		pSailProgram->SetUniform("material1.Ma", glm::vec3(0.3f));
-		pSailProgram->SetUniform("material1.Md", glm::vec3(1.0f));
-		pSailProgram->SetUniform("material1.Ms", glm::vec3(1.5f));
-		pSailProgram->SetUniform("material1.shininess", 200.0f);
-		pSailProgram->SetUniform("bUseTexture", true);
-		pSailProgram->SetUniform("matrices.modelViewMatrix", shipMV);
-		pSailProgram->SetUniform("matrices.normalMatrix", glm::transpose(glm::inverse(glm::mat3(shipMV))));
+		pHoloProgram->SetUniform("holoColour", glm::vec3(0.55f, 0.85f, 1.0f));
 		m_pShip->RenderSails();
 	}
 
-	// Restore default framebuffer
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, m_gameWindow.GetWidth(), m_gameWindow.GetHeight());
+	glDepthMask(GL_TRUE);
+	glDisable(GL_BLEND);
+	glEnable(GL_CULL_FACE);
+
+	// HUD labels (FreeType) — design coords 640x512 match panel pixels.
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	CShaderProgram *fontProgram = (*m_pShaderPrograms)[1];
+	fontProgram->UseProgram();
+	glm::mat4 ortho = glm::ortho(0.0f, 640.0f, 0.0f, 512.0f);
+	fontProgram->SetUniform("matrices.projMatrix", ortho);
+	fontProgram->SetUniform("matrices.modelViewMatrix", glm::mat4(1.0f));
+	fontProgram->SetUniform("vColour", glm::vec4(0.6f, 0.95f, 1.0f, 0.95f));
+	m_pFtFont->Render(16, 478, 24, "PERHONEN  //  STATUS");
+
+	int chargePct = (int)(m_shipCharge * 100.0f + 0.5f);
+	int unfurlPct = (int)(m_sailUnfurl * 100.0f + 0.5f);
+	const char* modeStr = (m_shipMode == 2) ? "COMBAT" : "CRUISE";
+	char buf[64];
+	m_pFtFont->Render(16, 22, 18, "HULL  100%%");
+	snprintf(buf, sizeof(buf), "CHRG %3d%%", chargePct);
+	m_pFtFont->Render(150, 22, 18, buf);
+	snprintf(buf, sizeof(buf), "SAIL %3d%%", unfurlPct);
+	m_pFtFont->Render(290, 22, 18, buf);
+	fontProgram->SetUniform("vColour", glm::vec4(1.0f, 0.85f, 0.4f, 0.95f));
+	m_pFtFont->Render(440, 22, 18, modeStr);
+
+	glDisable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
+}
+
+void Game::RenderDiffuseFleetPanel(float t01, float aspect, float time)
+{
+	// Camera positioned just inside the bridge front wall, looking outward.
+	glm::vec3 viewPos(0.0f, 26.0f, 64.0f);
+	glm::vec3 viewTarget(0.0f, 26.0f, 200.0f);
+	glm::mat4 viewMatrix = glm::lookAt(viewPos, viewTarget, glm::vec3(0, 1, 0));
+	glm::mat4 projMatrix = glm::perspective(glm::radians(45.0f), aspect, 0.5f, 5000.0f);
+
+	CShaderProgram *pMain = (*m_pShaderPrograms)[0];
+	pMain->UseProgram();
+	pMain->SetUniform("matrices.projMatrix", projMatrix);
+	pMain->SetUniform("sampler0", 0);
+	pMain->SetUniform("numPointLights", 0);
+	pMain->SetUniform("CubeMapTex", 10);
+	pMain->SetUniform("bMirror", false);
+	pMain->SetUniform("alpha", 0.0f);
+
+	glm::mat4 ident(1.0f);
+
+	// --- Skybox background ---
+	pMain->SetUniform("renderSkybox", true);
+	glm::mat4 skyMV = viewMatrix * glm::translate(glm::mat4(1.0f), viewPos);
+	SetMatrices(pMain, skyMV, ident, ident);
+	m_pSpaceSkybox->Render(10);
+	pMain->SetUniform("renderSkybox", false);
+
+	(void)viewMatrix;  // ships are deliberately not rendered — diffuse view only.
+
+	// --- Diffuse haze overlay: additive warm haze + scanlines + a
+	// soft red warning tint that builds with t01. ---
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+	CShaderProgram *fontProgram = (*m_pShaderPrograms)[1];
+	fontProgram->UseProgram();
+	glm::mat4 ortho = glm::ortho(0.0f, 1280.0f, 0.0f, 512.0f);
+	fontProgram->SetUniform("matrices.projMatrix", ortho);
+	fontProgram->SetUniform("sampler0", 0);
+	fontProgram->SetUniform("bFullColour", false);
+	glActiveTexture(GL_TEXTURE0);
+	glBindSampler(0, 0);
+	glBindTexture(GL_TEXTURE_2D, m_whiteTex);
+	glBindVertexArray(m_dialogueVAO);
+
+	// Soft warm haze across the whole panel — the "diffuse" atmospheric look.
+	{
+		glm::mat4 m = glm::scale(glm::mat4(1.0f), glm::vec3(1280.0f, 512.0f, 1.0f));
+		fontProgram->SetUniform("matrices.modelViewMatrix", m);
+		float warmth = 0.06f + 0.05f * sinf(time * 0.6f);
+		fontProgram->SetUniform("vColour",
+			glm::vec4(warmth + 0.04f * t01, warmth, warmth * 0.7f, 0.9f));
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	}
+
+	// Scanline ribbon — thin horizontal additive bands every ~24 pixels.
+	for (int y = 0; y < 512; y += 24) {
+		glm::mat4 m = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, (float)y, 0.0f))
+		            * glm::scale(glm::mat4(1.0f), glm::vec3(1280.0f, 1.0f, 1.0f));
+		fontProgram->SetUniform("matrices.modelViewMatrix", m);
+		fontProgram->SetUniform("vColour", glm::vec4(0.20f, 0.30f, 0.45f, 0.18f));
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	}
+
+	// Red threat tint that ramps with t01 — sells the "they're already here" beat.
+	{
+		float redA = 0.08f + 0.18f * t01;
+		glm::mat4 m = glm::scale(glm::mat4(1.0f), glm::vec3(1280.0f, 512.0f, 1.0f));
+		fontProgram->SetUniform("matrices.modelViewMatrix", m);
+		fontProgram->SetUniform("vColour", glm::vec4(0.80f, 0.10f, 0.05f, redA));
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	}
+
+	// --- Warning text: "INCOMING / SOBORNOST FLEET" ---
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	fontProgram->SetUniform("matrices.modelViewMatrix", glm::mat4(1.0f));
+	float textPulse = 0.6f + 0.4f * sinf(time * 6.5f);
+	fontProgram->SetUniform("vColour",
+		glm::vec4(1.0f, 0.18f, 0.12f, 0.55f + 0.45f * textPulse));
+	m_pFtFont->Render(20, 470, 28, "WARNING");
+	fontProgram->SetUniform("vColour", glm::vec4(1.0f, 0.65f, 0.40f, 0.85f));
+	m_pFtFont->Render(20, 30, 22, "INBOUND  SOBORNOST FLEET");
+
+	glBindVertexArray(0);
+	glDisable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
+}
+
+void Game::RenderSensorPanel(float time)
+{
+	// 2D pass via the text/quad shader. Design coords 640x512 match panel pixels.
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	CShaderProgram *fontProgram = (*m_pShaderPrograms)[1];
+	fontProgram->UseProgram();
+	glm::mat4 ortho = glm::ortho(0.0f, 640.0f, 0.0f, 512.0f);
+	fontProgram->SetUniform("matrices.projMatrix", ortho);
+	fontProgram->SetUniform("sampler0", 0);
+	fontProgram->SetUniform("bFullColour", false);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindSampler(0, 0);
+	glBindTexture(GL_TEXTURE_2D, m_whiteTex);
+
+	auto drawQuad = [&](float x, float y, float w, float h, float rotRad, glm::vec4 col) {
+		fontProgram->SetUniform("vColour", col);
+		glm::mat4 m(1.0f);
+		m = glm::translate(m, glm::vec3(x, y, 0.0f));
+		if (rotRad != 0.0f) m = glm::rotate(m, rotRad, glm::vec3(0, 0, 1));
+		m = glm::translate(m, glm::vec3(-w * 0.5f, -h * 0.5f, 0.0f));
+		m = glm::scale(m, glm::vec3(w, h, 1.0f));
+		fontProgram->SetUniform("matrices.modelViewMatrix", m);
+		glBindVertexArray(m_dialogueVAO);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	};
+
+	// Background tint
+	drawQuad(320.0f, 256.0f, 640.0f, 512.0f, 0.0f, glm::vec4(0.02f, 0.06f, 0.04f, 1.0f));
+
+	// Sensor centre and max radius — radar fills upper portion, HUD strip below.
+	const float cx = 320.0f;
+	const float cy = 290.0f;
+	const float rMax = 175.0f;
+	const int numRings = 4;
+
+	// Range rings — line loops with the unit-circle VAO
+	{
+		glBindVertexArray(m_circleVAO);
+		glLineWidth(1.2f);
+		for (int i = 1; i <= numRings; i++) {
+			float r = rMax * (float)i / (float)numRings;
+			glm::mat4 m(1.0f);
+			m = glm::translate(m, glm::vec3(cx, cy, 0.0f));
+			m = glm::scale(m, glm::vec3(r, r, 1.0f));
+			fontProgram->SetUniform("matrices.modelViewMatrix", m);
+			fontProgram->SetUniform("vColour", glm::vec4(0.18f, 0.65f, 0.40f, 0.55f));
+			glDrawArrays(GL_LINE_LOOP, 0, m_circleSegments);
+		}
+		// Cardinal cross — thin quads
+		drawQuad(cx, cy, rMax * 2.0f, 1.0f, 0.0f, glm::vec4(0.18f, 0.55f, 0.35f, 0.45f));
+		drawQuad(cx, cy, 1.0f, rMax * 2.0f, 0.0f, glm::vec4(0.18f, 0.55f, 0.35f, 0.45f));
+	}
+
+	// Rotating sweep with a fading trail
+	{
+		float sweepAng = time * 1.2f;
+		const int trailSegs = 14;
+		for (int i = 0; i < trailSegs; i++) {
+			float a = sweepAng - (float)i * 0.05f;
+			float alpha = (1.0f - (float)i / (float)trailSegs) * 0.55f;
+			float w = 2.4f - (float)i * 0.1f;
+			if (w < 0.6f) w = 0.6f;
+			float ex = cx + cosf(a) * rMax * 0.5f;
+			float ey = cy + sinf(a) * rMax * 0.5f;
+			drawQuad(ex, ey, rMax, w, a,
+			         glm::vec4(0.35f, 1.0f, 0.55f, alpha));
+		}
+		float ex = cx + cosf(sweepAng) * rMax * 0.5f;
+		float ey = cy + sinf(sweepAng) * rMax * 0.5f;
+		drawQuad(ex, ey, rMax, 3.5f, sweepAng,
+		         glm::vec4(0.7f, 1.0f, 0.8f, 0.95f));
+	}
+
+	// Centre Perhonen marker
+	drawQuad(cx, cy, 14.0f, 14.0f, glm::radians(45.0f),
+	         glm::vec4(0.5f, 1.0f, 0.6f, 1.0f));
+	drawQuad(cx, cy, 6.0f, 6.0f, glm::radians(45.0f),
+	         glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+
+	// Enemy contacts — Sobornost cruisers + Founders warmind, mirrored from cutscene state.
+	struct Contact { float bearingDeg; float rangeT; bool warmind; };
+	Contact contacts[4] = {
+		{  35.0f, 0.55f, false },
+		{  62.0f, 0.78f, false },
+		{  18.0f, 0.45f, false },
+		{ 145.0f, 0.95f, true  },
+	};
+	float ap = m_sobornostApproach;
+	int contactCount = 0;
+	for (int i = 0; i < 4; i++) {
+		if (!m_shipArrived[i] && ap < 0.05f) continue;
+		contactCount++;
+		float ang = glm::radians(contacts[i].bearingDeg);
+		float rangeFrac = contacts[i].rangeT * (1.0f - 0.6f * ap);
+		float r = rMax * rangeFrac;
+		float px = cx + cosf(ang) * r;
+		float py = cy + sinf(ang) * r;
+
+		bool hot = m_shipArrived[i];
+		glm::vec4 col = hot
+			? glm::vec4(1.0f, 0.18f, 0.18f, 0.95f)
+			: glm::vec4(1.0f, 0.65f, 0.30f, 0.65f);
+		float pulse = 0.85f + 0.15f * sinf(time * 6.0f + (float)i);
+		float size = (contacts[i].warmind ? 16.0f : 10.0f) * pulse;
+
+		drawQuad(px, py, size * 2.2f, size * 2.2f, 0.0f,
+		         glm::vec4(col.r, col.g, col.b, col.a * 0.18f));
+		drawQuad(px, py, size, size, glm::radians(45.0f), col);
+
+		if (contacts[i].warmind && hot) {
+			glBindVertexArray(m_circleVAO);
+			glm::mat4 m(1.0f);
+			m = glm::translate(m, glm::vec3(px, py, 0.0f));
+			m = glm::scale(m, glm::vec3(size * 1.6f, size * 1.6f, 1.0f));
+			fontProgram->SetUniform("matrices.modelViewMatrix", m);
+			fontProgram->SetUniform("vColour", glm::vec4(1.0f, 0.2f, 0.2f, 0.9f));
+			glLineWidth(2.0f);
+			glDrawArrays(GL_LINE_LOOP, 0, m_circleSegments);
+		}
+	}
+
+	// HUD — header at top, status strip at bottom
+	glm::vec4 labelCol = (contactCount > 0 && (m_shipArrived[3] || ap > 0.6f))
+		? glm::vec4(1.0f, 0.3f, 0.3f, 0.95f)
+		: glm::vec4(0.55f, 1.0f, 0.65f, 0.95f);
+	fontProgram->SetUniform("matrices.modelViewMatrix", glm::mat4(1.0f));
+	fontProgram->SetUniform("vColour", labelCol);
+	m_pFtFont->Render(16, 478, 24, "TACTICAL  //  LONG-RANGE SCAN");
+
+	char buf[64];
+	snprintf(buf, sizeof(buf), "CONTACTS %d", contactCount);
+	fontProgram->SetUniform("vColour", labelCol);
+	m_pFtFont->Render(16, 88, 18, buf);
+
+	if (m_shipArrived[3]) {
+		float warn = 0.5f + 0.5f * sinf(time * 8.0f);
+		fontProgram->SetUniform("vColour", glm::vec4(1.0f, 0.15f, 0.15f, 0.6f + 0.4f * warn));
+		m_pFtFont->Render(170, 88, 18, "ALERT  FOUNDERS");
+	} else if (ap > 0.05f) {
+		fontProgram->SetUniform("vColour", glm::vec4(1.0f, 0.85f, 0.4f, 0.85f));
+		m_pFtFont->Render(170, 88, 18, "INBOUND  SOBORNOST");
+	}
+
+	fontProgram->SetUniform("vColour", glm::vec4(0.55f, 1.0f, 0.65f, 0.8f));
+	float primaryAng = m_shipArrived[3] ? contacts[3].bearingDeg : contacts[0].bearingDeg;
+	float primaryRng = (m_shipArrived[3] ? contacts[3].rangeT : contacts[0].rangeT) * (1.0f - 0.6f * ap);
+	snprintf(buf, sizeof(buf), "BRG %3d  RNG %.2f", (int)(primaryAng + 0.5f), primaryRng);
+	m_pFtFont->Render(16, 56, 16, buf);
+	snprintf(buf, sizeof(buf), "SCAN %.0f%%", glm::clamp(ap * 100.0f, 0.0f, 100.0f));
+	m_pFtFont->Render(16, 28, 16, buf);
+
+	glBindVertexArray(0);
+	glLineWidth(1.0f);
+	glDisable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
 }
 
 void Game::Render()
@@ -839,17 +1208,12 @@ void Game::Render()
 		return;
 	}
 
-	// Phase 3: cut to black with HUD fading in
-	if (m_cutsceneActive && m_cutscenePhase == 3) {
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		RenderHudOverlay(m_hudBrightness);
-		DisplayFrameRate();
-		glfwSwapBuffers(m_gameWindow.GetWindow());
-		return;
-	}
+	// Phase 3: bridge stays visible. The FBO viewport switches to a
+	// diffuse "incoming fleet" preview (handled inside RenderViewportFBO),
+	// and the HUD overlay fades in over the bridge view (added at the end
+	// of the main render, near the swap call).
 
-	// Phase 6: escape gameplay rendering
+	// Phase 6: tactical escape gameplay rendering
 	if (m_cutscenePhase == 6) {
 		glutil::MatrixStack ms;
 		ms.SetIdentity();
@@ -874,7 +1238,6 @@ void Game::Render()
 		pMainProgram->SetUniform("light1.Ld", glm::vec3(0.8f));
 		pMainProgram->SetUniform("light1.Ls", glm::vec3(0.5f));
 
-		// Dummy shadow bias (no shadow map in escape phase)
 		glm::mat4 identBias(1.0f);
 
 		// Skybox
@@ -886,106 +1249,47 @@ void Game::Render()
 			pMainProgram->SetUniform("renderSkybox", false);
 		ms.Pop();
 
-		// Track
-		pMainProgram->SetUniform("material1.Ma", glm::vec3(0.5f));
-		pMainProgram->SetUniform("material1.Md", glm::vec3(0.5f));
-		pMainProgram->SetUniform("material1.Ms", glm::vec3(0.3f));
-		pMainProgram->SetUniform("material1.shininess", 15.0f);
-		glDisable(GL_CULL_FACE);
-		ms.Push();
-			SetMatrices(pMainProgram, ms.Top(), identBias, identBias);
-			m_pCatmullRom->RenderTrack();
-		ms.Pop();
-		glEnable(GL_CULL_FACE);
+		// Visible sun — bright sphere in the same direction as light1 (-100, 100, -100).
+		// Anchored to the camera so it reads as infinitely distant.
+		// Lit only by ambient: high Ma, zero Md/Ms, no texture.
+		// Plus an additive halo for a god-light bloom.
+		{
+			glm::vec3 sunDir = glm::normalize(glm::vec3(-100.0f, 100.0f, -100.0f));
+			glm::vec3 sunPos = m_pCamera->GetPosition() + sunDir * 600.0f;
 
-		// Ship at current track position
-		glm::vec3 trackPos, T, N, B;
-		m_pCatmullRom->SampleTNB(m_currentDistance, trackPos, T, N, B);
-		float halfWidth = 5.0f;
-		glm::vec3 shipPos = trackPos + N * (m_lateralOffset * halfWidth);
+			pMainProgram->SetUniform("bUseTexture", false);
+			pMainProgram->SetUniform("material1.Md", glm::vec3(0.0f));
+			pMainProgram->SetUniform("material1.Ms", glm::vec3(0.0f));
+			glDepthMask(GL_FALSE);
 
-		// Build orientation from TNB
-		glm::mat4 orient(1.0f);
-		orient[0] = glm::vec4(N, 0.0f);
-		orient[1] = glm::vec4(B, 0.0f);
-		orient[2] = glm::vec4(T, 0.0f); // ship nose is +Z in model space
-		orient[3] = glm::vec4(shipPos, 1.0f);
-
-		ms.Push();
-			glm::mat4 shipMV = ms.Top() * orient * glm::scale(glm::mat4(1.0f), glm::vec3(3.0f));
-			glm::mat3 shipNM = m_pCamera->ComputeNormalMatrix(shipMV);
-
-			// Hull
-			CShaderProgram *pHullProgram = (*m_pShaderPrograms)[3];
-			pHullProgram->UseProgram();
-			pHullProgram->SetUniform("matrices.projMatrix", m_pCamera->GetPerspectiveProjectionMatrix());
-			pHullProgram->SetUniform("sampler0", 0);
-			pHullProgram->SetUniform("charge", m_shipCharge);
-			pHullProgram->SetUniform("light1.position", viewMatrix * lightPos);
-			pHullProgram->SetUniform("light1.La", glm::vec3(0.6f));
-			pHullProgram->SetUniform("light1.Ld", glm::vec3(0.8f));
-			pHullProgram->SetUniform("light1.Ls", glm::vec3(0.5f));
-			pHullProgram->SetUniform("material1.Ma", glm::vec3(0.15f, 0.15f, 0.2f));
-			pHullProgram->SetUniform("material1.Md", glm::vec3(0.6f, 0.6f, 0.7f));
-			pHullProgram->SetUniform("material1.Ms", glm::vec3(1.0f, 1.0f, 1.2f));
-			pHullProgram->SetUniform("material1.shininess", 80.0f);
-			pHullProgram->SetUniform("bUseTexture", true);
-			pHullProgram->SetUniform("matrices.modelViewMatrix", shipMV);
-			pHullProgram->SetUniform("matrices.normalMatrix", shipNM);
-			m_pShip->RenderHull();
-
-			// Thrust
+			// Halo (additive, large + dim)
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-			glDepthMask(GL_FALSE);
-			glDisable(GL_CULL_FACE);
-
-			float exhaustZ = -7.35f;
-			float thrustScale = 0.1f + 0.9f * m_shipCharge;
-			glm::mat4 thrustMV = shipMV
-				* glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, exhaustZ))
-				* glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, thrustScale))
-				* glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -exhaustZ));
-			pHullProgram->SetUniform("bUseTexture", false);
-			pHullProgram->SetUniform("material1.Ma", glm::vec3(0.0f));
-			float intensity = 0.15f + 0.85f * m_shipCharge;
-			pHullProgram->SetUniform("material1.Md", intensity * glm::vec3(0.5f, 0.8f, 1.0f));
-			pHullProgram->SetUniform("material1.Ms", glm::vec3(0.0f));
-			pHullProgram->SetUniform("matrices.modelViewMatrix", thrustMV);
-			pHullProgram->SetUniform("matrices.normalMatrix", m_pCamera->ComputeNormalMatrix(thrustMV));
-			m_pShip->RenderThrust();
-
-			glEnable(GL_CULL_FACE);
-			glDepthMask(GL_TRUE);
+			ms.Push();
+				ms.Translate(sunPos);
+				ms.Scale(140.0f);
+				pMainProgram->SetUniform("material1.Ma", glm::vec3(0.45f, 0.38f, 0.20f));
+				SetMatrices(pMainProgram, ms.Top(), identBias, identBias);
+				m_pSphere->Render();
+			ms.Pop();
 			glDisable(GL_BLEND);
 
-			// Sails (if unfurled)
-			if (m_sailUnfurl > 0.01f) {
-				CShaderProgram *pSailProgram = (*m_pShaderPrograms)[2];
-				pSailProgram->UseProgram();
-				pSailProgram->SetUniform("matrices.projMatrix", m_pCamera->GetPerspectiveProjectionMatrix());
-				pSailProgram->SetUniform("sampler0", 0);
-				pSailProgram->SetUniform("unfurl", m_sailUnfurl);
-				pSailProgram->SetUniform("light1.position", viewMatrix * lightPos);
-				pSailProgram->SetUniform("light1.La", glm::vec3(0.6f));
-				pSailProgram->SetUniform("light1.Ld", glm::vec3(0.8f));
-				pSailProgram->SetUniform("light1.Ls", glm::vec3(0.5f));
-				pSailProgram->SetUniform("material1.Ma", glm::vec3(0.3f));
-				pSailProgram->SetUniform("material1.Md", glm::vec3(1.0f));
-				pSailProgram->SetUniform("material1.Ms", glm::vec3(1.5f));
-				pSailProgram->SetUniform("material1.shininess", 200.0f);
-				pSailProgram->SetUniform("bUseTexture", true);
-				pSailProgram->SetUniform("matrices.modelViewMatrix", shipMV);
-				pSailProgram->SetUniform("matrices.normalMatrix", shipNM);
-				m_pShip->RenderSails();
-			}
-		ms.Pop();
+			// Sun core (opaque, bright)
+			ms.Push();
+				ms.Translate(sunPos);
+				ms.Scale(40.0f);
+				pMainProgram->SetUniform("material1.Ma", glm::vec3(3.0f, 2.7f, 1.9f));
+				SetMatrices(pMainProgram, ms.Top(), identBias, identBias);
+				m_pSphere->Render();
+			ms.Pop();
 
-		// Particles
-		m_pParticleSystem->Render(viewMatrix, *m_pCamera->GetPerspectiveProjectionMatrix());
+			glDepthMask(GL_TRUE);
+			pMainProgram->SetUniform("bUseTexture", true);
+		}
 
-		// HUD
-		RenderEscapeHUD();
+		// Delegate all gameplay rendering to TacticalGame
+		m_pTacticalGame->Render(m_pCamera, m_pShaderPrograms, m_pFtFont,
+		                        m_gameWindow.GetWidth(), m_gameWindow.GetHeight());
 
 		DisplayFrameRate();
 		glfwSwapBuffers(m_gameWindow.GetWindow());
@@ -1165,9 +1469,9 @@ void Game::Render()
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE); // additive
 			fontProgram->SetUniform("matrices.projMatrix", m_pCamera->GetOrthographicProjectionMatrix());
 			fontProgram->SetUniform("matrices.modelViewMatrix", glm::mat4(1));
-			// Red flash for warmind, warm white for escorts
-			glm::vec4 flashCol = (m_shipArrived[3] && m_screenFlash > 0.5f)
-				? glm::vec4(0.8f, 0.1f, 0.05f, m_screenFlash)
+			// Red flash for warmind (latches once it has arrived), warm white for escorts.
+			glm::vec4 flashCol = m_shipArrived[3]
+				? glm::vec4(0.85f, 0.15f, 0.08f, m_screenFlash)
 				: glm::vec4(1.0f, 0.9f, 0.8f, m_screenFlash);
 			fontProgram->SetUniform("vColour", flashCol);
 			fontProgram->SetUniform("bFullColour", false);
@@ -1609,7 +1913,7 @@ void Game::Update()
 			glm::vec3 lookAt(20.0f, 25.0f, 150.0f);
 			// Screen shake — rotation-based so skybox shakes too
 			if (m_screenShake > 0.01f) {
-				float maxAngle = glm::radians(m_screenShake * 3.0f); // up to 3 degrees
+				float maxAngle = glm::radians(m_screenShake * 6.0f); // up to 6 degrees
 				m_shakeAngleTarget = glm::vec2(
 					maxAngle * ((float)(rand() % 200 - 100) / 100.0f),
 					maxAngle * ((float)(rand() % 200 - 100) / 100.0f)
@@ -1765,10 +2069,11 @@ void Game::Update()
 			m_pAudio->PlaySound("alert", 0.7f);
 		}
 
-		// Phase 3: black screen — HUD fades in
+		// Phase 3: bridge + diffuse-fleet FBO — HUD fades in over the bridge view
 		if (m_cutscenePhase == 3) {
 			m_cutsceneTimer += dt_s;
-			m_hudBrightness = glm::clamp(m_cutsceneTimer / 1.0f, 0.0f, 1.0f);
+			const float phase3Duration = 3.0f;
+			m_hudBrightness = glm::clamp(m_cutsceneTimer / 1.5f, 0.0f, 1.0f);
 
 			// Advance HUD animation frames during fade-in
 			m_hudFrameTimer += dt_s;
@@ -1777,7 +2082,7 @@ void Game::Update()
 				m_hudFrameIndex = (m_hudFrameIndex + 1) % HUD_TOTAL_FRAMES;
 			}
 
-			if (m_cutsceneTimer >= 1.0f) {
+			if (m_cutsceneTimer >= phase3Duration) {
 				m_cutscenePhase = 4;
 				m_cutsceneTimer = 0.0f;
 				m_pAudio->PlaySound("shipflight", 0.4f);
@@ -1809,9 +2114,14 @@ void Game::Update()
 				if (!m_shipArrived[i] && m_cutsceneTimer >= arrivalTimes[i]) {
 					m_shipArrived[i] = true;
 					glm::vec3 pos = glm::mix(escortStarts[i], escortEnds[i], ap);
-					m_pParticleSystem->Spawn(pos, 50);
-					m_screenFlash = 0.3f;
-					m_screenShake = 0.3f;
+					glm::vec3 warpBlue(0.3f, 0.5f, 1.0f);
+					glm::vec3 warpWhite(0.8f, 0.85f, 1.0f);
+					// Cruisers spawn close to camera (z~100), so keep particles small
+					// (sizes scaled down ~3x from the warmind, which is ~12x further away).
+					m_pParticleSystem->Spawn(pos, 40, warpWhite, 4.0f, 10.0f, 30.0f, 80.0f, 0.6f, 1.4f);
+					m_pParticleSystem->Spawn(pos, 30, warpBlue,  3.0f,  8.0f, 50.0f, 120.0f, 0.4f, 1.0f);
+					m_screenFlash = 0.2f;
+					m_screenShake = 0.5f;
 					m_pAudio->PlaySound("warpin", 0.6f);
 				}
 			}
@@ -1822,8 +2132,13 @@ void Game::Update()
 				glm::vec3 wStart(900.0f, 27.0f, 1800.0f);
 				glm::vec3 wEnd(600.0f, 26.0f, 1200.0f);
 				glm::vec3 wPos = glm::mix(wStart, wEnd, ap);
+				glm::vec3 hotWhite(1.0f, 0.9f, 0.7f);
+				glm::vec3 hotOrange(1.0f, 0.4f, 0.1f);
 				glm::vec3 bloodRed(0.8f, 0.05f, 0.02f);
 				glm::vec3 darkRed(0.5f, 0.0f, 0.0f);
+				// Hot bloom core — bright white/orange center like cruiser warp flashes
+				m_pParticleSystem->Spawn(wPos, 80, hotWhite, 40.0f, 100.0f, 20.0f, 60.0f, 1.0f, 2.5f);
+				m_pParticleSystem->Spawn(wPos, 60, hotOrange, 25.0f, 70.0f, 30.0f, 80.0f, 1.5f, 3.0f);
 				// Core burst — massive particles to match distant warship scale
 				m_pParticleSystem->Spawn(wPos, 180, bloodRed, 30.0f, 80.0f, 40.0f, 120.0f, 2.5f, 5.0f);
 				// Outer shrapnel ring
@@ -1835,7 +2150,7 @@ void Game::Update()
 				m_pParticleSystem->Spawn(wPos + glm::vec3(0, -60, 0),   50, darkRed,  20.0f, 50.0f, 60.0f, 160.0f, 1.5f, 3.5f);
 				m_pParticleSystem->Spawn(wPos + glm::vec3(0, 0,  120),  40, bloodRed, 20.0f, 50.0f, 50.0f, 140.0f, 2.0f, 4.5f);
 				m_pParticleSystem->Spawn(wPos + glm::vec3(0, 0, -120),  40, bloodRed, 20.0f, 50.0f, 50.0f, 140.0f, 2.0f, 4.5f);
-				m_screenFlash = 1.0f;
+				m_screenFlash = 0.85f;
 				m_screenShake = 1.0f;
 			}
 
@@ -1882,61 +2197,24 @@ void Game::Update()
 				m_shipMode = 2;
 				m_shipCharge = 0.8f;
 				m_hitCooldown = 0.0f;
-				m_hitTimer = 3.0f;  // first hit after 3 seconds
+				m_hitTimer = 3.0f;
 				// Stop bridge ambience
 				m_pAudio->StopSound("bridge1");
+				// Start tactical escape game
+				m_pTacticalGame->StartEscape();
 			}
 		}
 	}
 
-	// Phase 6: escape gameplay
-	if (m_cutscenePhase == 6 && !m_gameOver) {
-		// Countdown
-		m_escapeTimer -= dt_s;
-		if (m_escapeTimer <= 0.0f) {
-			m_escapeTimer = 0.0f;
-			m_gameOver = true;
-			m_escaped = false;
-			m_pAudio->StopSound("shipflight");
-			m_pAudio->PlaySound("loss", 0.8f);
-			m_pAudio->PlaySound("strangegame", 0.9f);
-		}
-
-		// Auto-advance along track
-		m_currentDistance += m_shipSpeed * dt_s;
-		float totalLen = m_pCatmullRom->GetTotalLength();
-		if (m_currentDistance >= totalLen) {
-			m_gameOver = true;
-			m_escaped = true;
-			m_pAudio->StopSound("shipflight");
-		}
-
-		// Lateral movement: A/D
-		GLFWwindow *win = m_gameWindow.GetWindow();
-		float lateralSpeed = 2.0f;
-		if (glfwGetKey(win, GLFW_KEY_A) == GLFW_PRESS)
-			m_lateralOffset -= lateralSpeed * dt_s;
-		if (glfwGetKey(win, GLFW_KEY_D) == GLFW_PRESS)
-			m_lateralOffset += lateralSpeed * dt_s;
-		m_lateralOffset = glm::clamp(m_lateralOffset, -1.0f, 1.0f);
-
-		// Compute ship position using TNB frame
-		glm::vec3 trackPos, T, N, B;
-		m_pCatmullRom->SampleTNB(m_currentDistance, trackPos, T, N, B);
-		float halfWidth = 5.0f;
-		glm::vec3 shipPos = trackPos + N * (m_lateralOffset * halfWidth);
-
-		// Third-person camera
-		glm::vec3 camPos = shipPos - T * 15.0f + B * 5.0f;
-		glm::vec3 camLookAt = shipPos + T * 20.0f;
-		m_pCamera->Set(camPos, camLookAt, B);
-
-		// Update particles
-		m_pParticleSystem->Update(dt_s);
-
-		// Combat mode: sails retract, thrust active
-		m_sailUnfurl = glm::max(m_sailUnfurl - 0.6f * dt_s, 0.0f);
-		m_shipCharge = glm::max(m_shipCharge - 0.05f * dt_s, 0.3f);
+	// Phase 6: tactical escape gameplay
+	if (m_cutscenePhase == 6) {
+		m_pTacticalGame->Update(dt_s, m_gameWindow.GetWindow());
+		if (!freeCamOverride)
+			m_pTacticalGame->UpdateCamera(m_pCamera);
+		else
+			m_pCamera->Set(m_pCamera->GetPosition(), m_pCamera->GetView(), glm::vec3(0,1,0));
+		m_gameOver = m_pTacticalGame->IsGameOver();
+		m_escaped = m_pTacticalGame->HasEscaped();
 	}
 
 	// Update animated meshes
@@ -2032,6 +2310,7 @@ void Game::RenderDialogue(const string& speaker, const string& text)
 	else if (speaker == "Mieli") portrait = m_portraitMieli;
 	else if (speaker == "Pellegrini") portrait = m_portraitPellegrini;
 	else if (speaker == "Perhonen") portrait = m_portraitPerhonen;
+	else if (speaker == "Chen") portrait = m_portraitChen;
 
 	int portraitSize = (int)((nameTagH + boxHeight / 3) * 1.8f);
 	int borderW = 4;
@@ -2251,6 +2530,11 @@ void Game::KeyCallback(GLFWwindow* window, int key, int scancode, int action, in
 	Game& game = Game::GetInstance();
 
 	if (action == GLFW_PRESS) {
+		// Tactical game input (phase 6)
+		if (game.m_cutscenePhase == 6 && game.m_pTacticalGame) {
+			game.m_pTacticalGame->OnKeyPress(key);
+		}
+
 		switch (key) {
 		case GLFW_KEY_ESCAPE:
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -2260,6 +2544,23 @@ void Game::KeyCallback(GLFWwindow* window, int key, int scancode, int action, in
 			break;
 		case GLFW_KEY_F1:
 			game.m_pAudio->PlayEventSound();
+			break;
+		// Camera mode pins (only meaningful during the tactical phase)
+		case GLFW_KEY_F3:
+			if (game.m_pTacticalGame)
+				game.m_pTacticalGame->SetCameraMode(CameraMode::TopDown);
+			break;
+		case GLFW_KEY_F4:
+			if (game.m_pTacticalGame)
+				game.m_pTacticalGame->SetCameraMode(CameraMode::ThirdPerson);
+			break;
+		case GLFW_KEY_F5:
+			if (game.m_pTacticalGame)
+				game.m_pTacticalGame->SetCameraMode(CameraMode::Animated);
+			break;
+		case GLFW_KEY_F6:
+			if (game.m_pTacticalGame)
+				game.m_pTacticalGame->SetCameraMode(CameraMode::Auto);
 			break;
 		}
 	}
@@ -2271,10 +2572,11 @@ void Game::MouseButtonCallback(GLFWwindow* window, int button, int action, int m
 	(void)mods;
 	Game& game = Game::GetInstance();
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-		// Title screen — click to start
+		// Title screen — click to start cutscene
 		if (game.m_titleScreen) {
 			game.m_titleScreen = false;
 			game.m_cutscenePhase = 0;
+			game.m_cutsceneActive = true;
 			game.m_pAudio->PlaySound("sensor", 0.6f);
 			return;
 		}

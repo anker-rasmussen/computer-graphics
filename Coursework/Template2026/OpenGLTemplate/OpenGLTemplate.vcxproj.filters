@@ -12,6 +12,18 @@
     <Filter Include="Source Files\BasicShapes">
       <UniqueIdentifier>{d5eb352f-53f3-4c3a-a234-5f58e6eec535}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Gameplay">
+      <UniqueIdentifier>{6c1b5e7a-9a01-4f63-9c8e-8e8d9ce0e1a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Route">
+      <UniqueIdentifier>{6c1b5e7a-9a01-4f63-9c8e-8e8d9ce0e1a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Gameplay">
+      <UniqueIdentifier>{6c1b5e7a-9a01-4f63-9c8e-8e8d9ce0e1a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Route">
+      <UniqueIdentifier>{6c1b5e7a-9a01-4f63-9c8e-8e8d9ce0e1a4}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Shaders">
       <UniqueIdentifier>{8bf5c3e1-be9e-4c62-8c2d-5c0d5c307b94}</UniqueIdentifier>
     </Filter>
@@ -68,6 +80,33 @@
     <ClInclude Include="VertexBufferObjectIndexed.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AnimatedMesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Bridge.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FrameBufferObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticleSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Ship.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Asteroid.h">
+      <Filter>Header Files\Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="TacticalGame.h">
+      <Filter>Header Files\Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="TacticalGrid.h">
+      <Filter>Header Files\Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="CatmullRom\CatmullRom.h">
+      <Filter>Header Files\Route</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Audio.cpp">
@@ -117,6 +156,33 @@
     </ClCompile>
     <ClCompile Include="Plane.cpp">
       <Filter>Source Files\BasicShapes</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimatedMesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Bridge.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FrameBufferObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ParticleSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Ship.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Asteroid.cpp">
+      <Filter>Source Files\Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="TacticalGame.cpp">
+      <Filter>Source Files\Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="TacticalGrid.cpp">
+      <Filter>Source Files\Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="CatmullRom\CatmullRom.cpp">
+      <Filter>Source Files\Route</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

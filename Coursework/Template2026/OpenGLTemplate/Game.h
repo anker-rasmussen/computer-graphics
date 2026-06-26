@@ -23,6 +23,7 @@ class CAnimatedMesh;
 class CBridge;  // unused — keeping for now
 class CParticleSystem;
 class CFrameBufferObject;
+class CTacticalGame;
 
 class Game {
 private:
@@ -52,6 +53,7 @@ private:
 	COpenAssetImportMesh *m_pTableMesh;
 	COpenAssetImportMesh *m_pCruiserMesh;
 	COpenAssetImportMesh *m_pWarmindMesh;
+	COpenAssetImportMesh *m_pMissileMesh;
 	bool m_cutsceneActive;
 	float m_shipCharge;   // 0.0–1.0, stored energy (drives hull neon glow + thrust)
 	float m_sailUnfurl;   // 0.0–1.0, how far sails are extended
@@ -86,7 +88,7 @@ private:
 	// Visual novel dialogue
 	void RenderDialogue(const string& speaker, const string& text);
 	GLuint m_dialogueVAO, m_dialogueVBO, m_whiteTex;
-	CTexture *m_portraitJean, *m_portraitMieli, *m_portraitPellegrini, *m_portraitPerhonen;
+	CTexture *m_portraitJean, *m_portraitMieli, *m_portraitPellegrini, *m_portraitPerhonen, *m_portraitChen;
 	CTexture *m_pFloorTex, *m_pWallTex, *m_pViewportTex;
 	struct DialogueLine { string speaker; string text; };
 	vector<DialogueLine> m_dialogueScript;
@@ -112,6 +114,8 @@ private:
 	float m_shipSpeed;
 	bool m_gameOver, m_escaped;
 	CParticleSystem *m_pParticleSystem;
+	CTacticalGame *m_pTacticalGame;
+	CCatmullRom *m_pEscapeSpline;  // separate long spline for escape phase
 	void RenderEscapeHUD();
 
 	// Rendering helpers
@@ -125,9 +129,20 @@ private:
 	glm::mat4 m_spotViewMatrix, m_spotProjMatrix;
 	static const int SHADOW_MAP_SIZE = 2048;
 
+	// Bloom post-processing for tactical phase
+	CFrameBufferObject *m_pBloomSceneFBO; 
+	CFrameBufferObject *m_pBloomPingFBO;
+	CFrameBufferObject *m_pBloomPongFBO;
+	GLuint m_bloomQuadVAO;
+
 	// Viewport render-to-texture (bridge front wall live view)
 	CFrameBufferObject *m_pViewportFBO;
 	void RenderViewportFBO();
+	void RenderHologramPanel(float aspect, float time);
+	void RenderSensorPanel(float time);
+	void RenderDiffuseFleetPanel(float t01, float aspect, float time);
+	GLuint m_circleVAO, m_circleVBO;
+	int m_circleSegments;
 
 	// HUD sprite sheet overlay (phases 3–4)
 	CTexture *m_pHudSpriteSheet;

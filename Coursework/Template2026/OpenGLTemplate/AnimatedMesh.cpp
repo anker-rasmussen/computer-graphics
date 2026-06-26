@@ -1,8 +1,6 @@
 #include <assert.h>
 #include <cstdio>
-#ifndef _WIN32
-#include <dirent.h>
-#endif
+#include <filesystem>
 #include "AnimatedMesh.h"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -321,11 +319,10 @@ bool CAnimatedMesh::InitMaterials(const aiScene* pScene, const std::string& file
             std::string mname(matNameStr.C_Str());
             std::string searchSuffix = "_" + mname + "_BaseColor.png";
 
-            DIR* dirp = opendir(dir.c_str());
-            if (dirp) {
-                struct dirent* ent;
-                while ((ent = readdir(dirp)) != NULL) {
-                    std::string fname(ent->d_name);
+            std::error_code ec;
+            if (std::filesystem::is_directory(dir, ec)) {
+                for (const auto& entry : std::filesystem::directory_iterator(dir, ec)) {
+                    std::string fname = entry.path().filename().string();
                     if (fname.size() >= searchSuffix.size() &&
                         fname.compare(fname.size() - searchSuffix.size(), searchSuffix.size(), searchSuffix) == 0) {
                         std::string fullPath = dir + "/" + fname;
@@ -339,7 +336,6 @@ bool CAnimatedMesh::InitMaterials(const aiScene* pScene, const std::string& file
                         break;
                     }
                 }
-                closedir(dirp);
             }
         }
 
@@ -349,11 +345,10 @@ bool CAnimatedMesh::InitMaterials(const aiScene* pScene, const std::string& file
             pMaterial->Get(AI_MATKEY_NAME, matNameStr);
             std::string mname(matNameStr.C_Str());
             std::string texDir = dir + "/texture";
-            DIR* dirp = opendir(texDir.c_str());
-            if (dirp) {
-                struct dirent* ent;
-                while ((ent = readdir(dirp)) != NULL) {
-                    std::string fname(ent->d_name);
+            std::error_code ec;
+            if (std::filesystem::is_directory(texDir, ec)) {
+                for (const auto& entry : std::filesystem::directory_iterator(texDir, ec)) {
+                    std::string fname = entry.path().filename().string();
                     // Match <materialname>_diff (e.g. body_diff_01.jpg for material "body")
                     if (fname.find(mname + "_diff") == 0) {
                         std::string fullPath = texDir + "/" + fname;
@@ -367,7 +362,6 @@ bool CAnimatedMesh::InitMaterials(const aiScene* pScene, const std::string& file
                         break;
                     }
                 }
-                closedir(dirp);
             }
         }
 

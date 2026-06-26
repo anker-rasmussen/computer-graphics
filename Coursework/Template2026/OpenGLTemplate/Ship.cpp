@@ -320,19 +320,27 @@ void CShip::CreateSolarSails(float sailHeight, float sailWidth, float curvature,
 			glm::vec3 bilinear = (1-sv)*(1-t)*aft + sv*(1-t)*lateralB
 			                   + (1-sv)*t*lateralA + sv*t*forward;
 			glm::vec3 pos = (1-t)*bottom + t*top + (1-sv)*left + sv*right - bilinear;
-			// Billowing: sail belly sags backward (loose cloth catching solar wind)
+			// Billowing: each sail bulges radially outward from the ship axis
+			// (in its own (cx, cy) direction), like loose cloth caught by light pressure.
 			float belly = sinf((float)M_PI * sv) * sinf((float)M_PI * t);
-			pos.z -= 2.0f * belly;
-			// Gravity droop: centre of sail hangs lower, more at edges away from spars
-			pos.y -= 0.6f * belly;
+			pos.x += cx * 2.0f * belly;
+			pos.y += cy * 2.0f * belly;
 			return pos;
 		};
 
-		float eps = 1.0f / gridN;
+		// Small finite-difference step for analytic-style derivatives.
+		// Must be much smaller than the grid spacing (1/gridN) so the
+		// per-vertex normal reflects the local tangent plane rather than
+		// the secant across two grid cells (which produces jagged shading).
+		const float eps = 1e-3f;
 
-		glm::vec3 refDs = evalPos(0.5f + eps, 0.5f) - evalPos(0.5f - eps, 0.5f);
-		glm::vec3 refDt = evalPos(0.5f, 0.5f + eps) - evalPos(0.5f, 0.5f - eps);
-		glm::vec3 refNormal = glm::normalize(glm::cross(refDs, refDt));
+		auto computeNormal = [&](float sv, float t) -> glm::vec3 {
+			glm::vec3 dPds = evalPos(fminf(sv + eps, 1.0f), t) - evalPos(fmaxf(sv - eps, 0.0f), t);
+			glm::vec3 dPdt = evalPos(sv, fminf(t + eps, 1.0f)) - evalPos(sv, fmaxf(t - eps, 0.0f));
+			glm::vec3 n = glm::cross(dPds, dPdt);
+			float len = glm::length(n);
+			return (len > 1e-6f) ? n / len : glm::vec3(0, 1, 0);
+		};
 
 		// Front-face vertices
 		unsigned int baseVert = m_vertexCount;
@@ -340,19 +348,7 @@ void CShip::CreateSolarSails(float sailHeight, float sailWidth, float curvature,
 			float t = (float)j / gridN;
 			for (int i = 0; i <= gridN; i++) {
 				float sv = (float)i / gridN;
-
-				glm::vec3 dPds = evalPos(fminf(sv + eps, 1.0f), t) - evalPos(fmaxf(sv - eps, 0.0f), t);
-				glm::vec3 dPdt = evalPos(sv, fminf(t + eps, 1.0f)) - evalPos(sv, fmaxf(t - eps, 0.0f));
-
-				glm::vec3 normal = glm::cross(dPds, dPdt);
-				float len = glm::length(normal);
-				if (len > 0.0001f) normal /= len;
-				else normal = glm::vec3(0, 1, 0);
-
-				if (glm::dot(normal, refNormal) < 0.0f)
-					normal = -normal;
-
-				AddVertex(evalPos(sv, t), glm::vec2(sv, t), normal, frontColour);
+				AddVertex(evalPos(sv, t), glm::vec2(sv, t), computeNormal(sv, t), frontColour);
 			}
 		}
 
@@ -362,19 +358,7 @@ void CShip::CreateSolarSails(float sailHeight, float sailWidth, float curvature,
 			float t = (float)j / gridN;
 			for (int i = 0; i <= gridN; i++) {
 				float sv = (float)i / gridN;
-
-				glm::vec3 dPds = evalPos(fminf(sv + eps, 1.0f), t) - evalPos(fmaxf(sv - eps, 0.0f), t);
-				glm::vec3 dPdt = evalPos(sv, fminf(t + eps, 1.0f)) - evalPos(sv, fmaxf(t - eps, 0.0f));
-
-				glm::vec3 normal = glm::cross(dPds, dPdt);
-				float len = glm::length(normal);
-				if (len > 0.0001f) normal /= len;
-				else normal = glm::vec3(0, 1, 0);
-
-				if (glm::dot(normal, refNormal) < 0.0f)
-					normal = -normal;
-
-				AddVertex(evalPos(sv, t), glm::vec2(sv, t), -normal, backColour);
+				AddVertex(evalPos(sv, t), glm::vec2(sv, t), -computeNormal(sv, t), backColour);
 			}
 		}
 

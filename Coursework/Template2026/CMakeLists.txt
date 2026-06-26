@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(OpenGLTemplate)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find required packages
@@ -43,6 +43,9 @@ set(SOURCES
     OpenGLTemplate/AnimatedMesh.cpp
     OpenGLTemplate/Bridge.cpp
     OpenGLTemplate/CatmullRom/CatmullRom.cpp
+    OpenGLTemplate/Asteroid.cpp
+    OpenGLTemplate/TacticalGrid.cpp
+    OpenGLTemplate/TacticalGame.cpp
     OpenGLTemplate/FrameBufferObject.cpp
     OpenGLTemplate/Texture.cpp
     OpenGLTemplate/VertexBufferObject.cpp

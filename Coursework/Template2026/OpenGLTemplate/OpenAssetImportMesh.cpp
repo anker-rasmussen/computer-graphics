@@ -45,6 +45,10 @@ void COpenAssetImportMesh::MeshEntry::Init(const std::vector<Vertex>& Vertices,
                           const std::vector<unsigned int>& Indices)
 {
     NumIndices = int(Indices.size());
+    if (Vertices.empty() || Indices.empty()) {
+        NumIndices = 0;
+        return;
+    }
 
 	glGenBuffers(1, &vbo);
   	glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -124,7 +128,7 @@ void COpenAssetImportMesh::InitMesh(unsigned int Index, const aiMesh* paiMesh)
 
     for (unsigned int i = 0 ; i < paiMesh->mNumVertices ; i++) {
         const aiVector3D* pPos      = &(paiMesh->mVertices[i]);
-        const aiVector3D* pNormal   = &(paiMesh->mNormals[i]);
+        const aiVector3D* pNormal   = paiMesh->HasNormals() ? &(paiMesh->mNormals[i]) : &Zero3D;
         const aiVector3D* pTexCoord = paiMesh->HasTextureCoords(0) ? &(paiMesh->mTextureCoords[0][i]) : &Zero3D;
 
         Vertex v(glm::vec3(pPos->x, pPos->y, pPos->z),
@@ -136,7 +140,7 @@ void COpenAssetImportMesh::InitMesh(unsigned int Index, const aiMesh* paiMesh)
 
     for (unsigned int i = 0 ; i < paiMesh->mNumFaces ; i++) {
         const aiFace& Face = paiMesh->mFaces[i];
-        assert(Face.mNumIndices == 3);
+        if (Face.mNumIndices != 3) continue; // skip non-triangle faces
         Indices.push_back(Face.mIndices[0]);
         Indices.push_back(Face.mIndices[1]);
         Indices.push_back(Face.mIndices[2]);

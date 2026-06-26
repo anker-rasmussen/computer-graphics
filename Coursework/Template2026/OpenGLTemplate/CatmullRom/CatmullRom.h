@@ -15,6 +15,7 @@ public:
 	~CCatmullRom();
 
 	void CreateCentreline();
+	void CreateCentrelineEscape();  // long non-looping escape path
 	void CreateOffsetCurves();
 	void CreateTrack(string directory, string filename);
 
@@ -31,9 +32,14 @@ public:
 	void Release();
 
 	float GetTotalLength() const { return m_totalLength; }
+	bool IsLoop() const { return m_isLoop; }
 
 private:
 	void SetControlPoints();
+	void SetControlPointsEscape();
+
+	bool m_isLoop;
+	float m_halfWidth; // half-width of the track
 
 	glm::vec3 Interpolate(glm::vec3 &p0, glm::vec3 &p1, glm::vec3 &p2, glm::vec3 &p3, float t);
 

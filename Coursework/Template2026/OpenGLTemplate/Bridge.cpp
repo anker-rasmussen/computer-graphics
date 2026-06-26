@@ -143,10 +143,12 @@ void CBridge::Create(float width, float height, float depth)
     m_viewportIndexStart = (unsigned int)m_indices.size();
     {
         glm::vec3 n(0, 0, -1);
-        unsigned int v0 = AddVertex(glm::vec3(vpL, vpB, hd + nudge), glm::vec2(0, 0), n);
-        unsigned int v1 = AddVertex(glm::vec3(vpR, vpB, hd + nudge), glm::vec2(1, 0), n);
-        unsigned int v2 = AddVertex(glm::vec3(vpR, vpT, hd + nudge), glm::vec2(1, 1), n);
-        unsigned int v3 = AddVertex(glm::vec3(vpL, vpT, hd + nudge), glm::vec2(0, 1), n);
+        // U flipped (1->0 across the wall) so the live FBO image isn't mirrored
+        // when viewed from inside the bridge.
+        unsigned int v0 = AddVertex(glm::vec3(vpL, vpB, hd + nudge), glm::vec2(1, 0), n);
+        unsigned int v1 = AddVertex(glm::vec3(vpR, vpB, hd + nudge), glm::vec2(0, 0), n);
+        unsigned int v2 = AddVertex(glm::vec3(vpR, vpT, hd + nudge), glm::vec2(0, 1), n);
+        unsigned int v3 = AddVertex(glm::vec3(vpL, vpT, hd + nudge), glm::vec2(1, 1), n);
         AddQuad(v3, v2, v1, v0);
     }
     m_viewportIndexCount = (unsigned int)m_indices.size() - m_viewportIndexStart;

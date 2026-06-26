@@ -76,6 +76,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -84,7 +85,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>.\include\freetype;.\include\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\include\freetype;.\include\assimp;.\CatmullRom;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>.\lib</AdditionalLibraryDirectories>
@@ -99,6 +100,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -113,7 +115,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>.\include\freetype;.\include\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\include\freetype;.\include\assimp;.\CatmullRom;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -123,38 +125,56 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AnimatedMesh.h" />
+    <ClInclude Include="Asteroid.h" />
     <ClInclude Include="Audio.h" />
+    <ClInclude Include="Bridge.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="CatmullRom\CatmullRom.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Cubemap.h" />
+    <ClInclude Include="FrameBufferObject.h" />
     <ClInclude Include="FreeTypeFont.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GameWindow.h" />
     <ClInclude Include="HighResolutionTimer.h" />
     <ClInclude Include="MatrixStack.h" />
     <ClInclude Include="OpenAssetImportMesh.h" />
+    <ClInclude Include="ParticleSystem.h" />
     <ClInclude Include="Plane.h" />
     <ClInclude Include="Shaders.h" />
+    <ClInclude Include="Ship.h" />
     <ClInclude Include="Skybox.h" />
     <ClInclude Include="Sphere.h" />
+    <ClInclude Include="TacticalGame.h" />
+    <ClInclude Include="TacticalGrid.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="VertexBufferObject.h" />
     <ClInclude Include="VertexBufferObjectIndexed.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AnimatedMesh.cpp" />
+    <ClCompile Include="Asteroid.cpp" />
     <ClCompile Include="Audio.cpp" />
+    <ClCompile Include="Bridge.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CatmullRom\CatmullRom.cpp" />
     <ClCompile Include="Cubemap.cpp" />
+    <ClCompile Include="FrameBufferObject.cpp" />
     <ClCompile Include="FreeTypeFont.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameWindow.cpp" />
     <ClCompile Include="HighResolutionTimer.cpp" />
     <ClCompile Include="MatrixStack.cpp" />
     <ClCompile Include="OpenAssetImportMesh.cpp" />
+    <ClCompile Include="ParticleSystem.cpp" />
     <ClCompile Include="Plane.cpp" />
     <ClCompile Include="Shaders.cpp" />
+    <ClCompile Include="Ship.cpp" />
     <ClCompile Include="Skybox.cpp" />
     <ClCompile Include="Sphere.cpp" />
+    <ClCompile Include="TacticalGame.cpp" />
+    <ClCompile Include="TacticalGrid.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="VertexBufferObject.cpp" />
     <ClCompile Include="VertexBufferObjectIndexed.cpp" />
