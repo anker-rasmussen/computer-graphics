@@ -1,0 +1,435 @@
+% ----------------------------------------------------------------------
+% Narrative / theory references
+% ----------------------------------------------------------------------
+
+@book{rajaniemi2010,
+  author    = {Hannu Rajaniemi},
+  title     = {The Quantum Thief},
+  publisher = {Gollancz},
+  year      = {2010}
+}
+
+@article{catmullrom1974,
+  author  = {Edwin Catmull and Raphael Rom},
+  title   = {A Class of Local Interpolating Splines},
+  journal = {Computer Aided Geometric Design},
+  pages   = {317--326},
+  year    = {1974}
+}
+
+@inproceedings{perlin2002,
+  author    = {Ken Perlin},
+  title     = {Improving Noise},
+  booktitle = {Proceedings of {SIGGRAPH} 2002},
+  year      = {2002},
+  pages     = {681--682}
+}
+
+@incollection{farin2002coons,
+  author    = {Gerald Farin},
+  title     = {Coons Patches},
+  booktitle = {Curves and Surfaces for {CAGD}: A Practical Guide},
+  edition   = {5},
+  chapter   = {20},
+  publisher = {Morgan Kaufmann},
+  year      = {2002}
+}
+
+@misc{learnopengl_shadows,
+  author  = {Joey de Vries},
+  title   = {{LearnOpenGL} --- Shadow Mapping},
+  url     = {https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping},
+  urldate = {2026-04-08}
+}
+
+@misc{learnopengl_framebuffers,
+  author  = {Joey de Vries},
+  title   = {{LearnOpenGL} --- Framebuffers},
+  url     = {https://learnopengl.com/Advanced-OpenGL/Framebuffers},
+  urldate = {2026-04-04},
+  note    = {Pattern for the render-to-texture viewport FBO}
+}
+
+@misc{learnopengl_cubemaps,
+  author  = {Joey de Vries},
+  title   = {{LearnOpenGL} --- Cubemaps},
+  url     = {https://learnopengl.com/Advanced-OpenGL/Cubemaps},
+  urldate = {2026-04-02},
+  note    = {Skybox sampling and environment-mapped reflection}
+}
+
+@misc{learnopengl_modelloading,
+  author  = {Joey de Vries},
+  title   = {{LearnOpenGL} --- Model Loading with {Assimp}},
+  url     = {https://learnopengl.com/Model-Loading/Assimp},
+  urldate = {2026-04-05},
+  note    = {Pattern for COpenAssetImportMesh static-mesh loader}
+}
+
+@misc{ogldev_skeletal,
+  author  = {Etay Meiri},
+  title   = {{ogldev} Tutorial 38 --- Skeletal Animation with {Assimp}},
+  url     = {https://ogldev.org/www/tutorial38/tutorial38.html},
+  urldate = {2026-04-09},
+  note    = {Bone hierarchy walk, per-vertex 4-bone weights, aiNodeAnim sampling}
+}
+
+@misc{ogldev_skeletal_split,
+  author  = {Etay Meiri},
+  title   = {{ogldev} Tutorial 39 --- Silhouette Detection / Stencil Shadows (skeletal continuation)},
+  url     = {https://ogldev.org/www/tutorial39/tutorial39.html},
+  urldate = {2026-04-09}
+}
+
+@misc{learnopengl_particles,
+  author  = {Joey de Vries},
+  title   = {{LearnOpenGL} --- Particles},
+  url     = {https://learnopengl.com/In-Practice/2D-Game/Particles},
+  urldate = {2026-04-12},
+  note    = {CPU particle pool with point-sprite rendering}
+}
+
+@misc{learnopengl_text,
+  author  = {Joey de Vries},
+  title   = {{LearnOpenGL} --- Text Rendering with {FreeType}},
+  url     = {https://learnopengl.com/In-Practice/Text-Rendering},
+  urldate = {2026-04-10},
+  note    = {HUD text rendering pattern (used via the template's CFreeTypeFont)}
+}
+
+@misc{wikipedia_catmullrom,
+  author  = {{Wikipedia}},
+  title   = {Centripetal {Catmull--Rom} spline},
+  url     = {https://en.wikipedia.org/wiki/Centripetal_Catmull%E2%80%93Rom_spline},
+  urldate = {2026-03-20}
+}
+
+@misc{learnopengl_fbo_postprocess,
+  author  = {Joey de Vries},
+  title   = {{LearnOpenGL} --- Bloom (post-processing)},
+  url     = {https://learnopengl.com/Advanced-Lighting/Bloom},
+  urldate = {2026-04-15},
+  note    = {Reference for the prototyped (and ultimately disabled) bloom path}
+}
+
+@misc{learnopengl_basiclighting,
+  author  = {Joey de Vries},
+  title   = {{LearnOpenGL} --- Basic Lighting},
+  url     = {https://learnopengl.com/Lighting/Basic-Lighting},
+  urldate = {2026-03-25},
+  note    = {Phong ambient/diffuse/specular formulation in mainShader.frag}
+}
+
+@misc{learnopengl_multiplelights,
+  author  = {Joey de Vries},
+  title   = {{LearnOpenGL} --- Multiple Lights},
+  url     = {https://learnopengl.com/Lighting/Multiple-Lights},
+  urldate = {2026-03-26},
+  note    = {Point-light array with attenuation in mainShader.frag}
+}
+
+@misc{learnopengl_skybox,
+  author  = {Joey de Vries},
+  title   = {{LearnOpenGL} --- Cubemaps / Skybox},
+  url     = {https://learnopengl.com/Advanced-OpenGL/Cubemaps},
+  urldate = {2026-04-02},
+  note    = {Skybox rendering pattern (cubemap sampler + depth trick); shared with environment-mapping reference}
+}
+
+@misc{kahler_icosphere,
+  author  = {Andreas Kahler},
+  title   = {Creating an Icosphere Mesh in Code},
+  year    = {2009},
+  url     = {http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html},
+  urldate = {2026-04-06},
+  note    = {Golden-ratio icosahedron + midpoint subdivision; basis for CAsteroid::MakeIcosahedron and CAsteroid::Subdivide}
+}
+
+@misc{fmod_docs,
+  author  = {{Firelight Technologies}},
+  title   = {{FMOD} Studio {API} --- Core {API} Reference},
+  url     = {https://fmod.com/docs/2.02/api/core-api.html},
+  urldate = {2026-04-10},
+  note    = {Init / load / play / release flow for the CAudio wrapper}
+}
+
+@misc{songho_sphere,
+  author  = {Song Ho Ahn},
+  title   = {{OpenGL} Sphere},
+  url     = {http://www.songho.ca/opengl/gl_sphere.html},
+  urldate = {2026-03-22},
+  note    = {Procedural sphere (slices/stacks) tessellation with normals and UVs; basis for the surface-of-revolution hull tessellation in CShip}
+}
+
+@misc{songho_cylinder,
+  author  = {Song Ho Ahn},
+  title   = {{OpenGL} Cylinder},
+  url     = {http://www.songho.ca/opengl/gl_cylinder.html},
+  urldate = {2026-04-03},
+  note    = {Procedural cylinder tessellation; basis for the bridge curved-wall (half-cylinder) construction}
+}
+
+@book{wolff_cookbook,
+  author    = {David Wolff},
+  title     = {{OpenGL} 4 Shading Language Cookbook},
+  edition   = {3},
+  publisher = {Packt Publishing},
+  year      = {2018},
+  isbn      = {978-1789342253},
+  note      = {LightInfo / MaterialInfo (La/Ld/Ls/Ma/Md/Ms) struct convention used in mainShader.frag}
+}
+
+@misc{geeks3d_morphtarget,
+  author  = {{Geeks3D} (JeGX)},
+  title   = {{(GLSL)} Simple Morph Target Animation with Generic Vertex Attributes},
+  year    = {2014},
+  url     = {https://www.geeks3d.com/20140205/glsl-simple-morph-target-animation-opengl-glslhacker-demo/},
+  urldate = {2026-04-11},
+  note    = {Source for the per-vertex \texttt{mix(positionA, positionB, factor)} scaffold used by sailShader.vert. The spar/membrane separation and sag term on top are author additions.}
+}
+
+@misc{in3005_lectures,
+  author  = {Eddie Edwards},
+  title   = {{IN3005} Computer Graphics --- Lecture Slides},
+  year    = {2026},
+  note    = {City, University of London. Lecture suggestion to use rotational rather than translational camera shake so the skybox shakes coherently.}
+}
+
+@misc{template_in3005,
+  author  = {Eddie Edwards},
+  title   = {{IN3005} Computer Graphics --- OpenGL Project Template},
+  year    = {2026},
+  note    = {City, University of London. Project template provided on Moodle; \texttt{neon.png} is a template-shipped texture.}
+}
+
+@misc{tex_hud_spritesheet,
+  author  = {{Vecteezy}},
+  title   = {Futuristic {HUD} Screen Overlay},
+  url     = {https://www.vecteezy.com/free-vector/futuristic-hud},
+  urldate = {2026-03-22},
+  note    = {Free-licence sprite sheet used for cutscene HUD overlay.}
+}
+
+% ----------------------------------------------------------------------
+% Tools
+% ----------------------------------------------------------------------
+
+@misc{mixamo,
+  author = {Adobe},
+  title  = {{Mixamo}},
+  url    = {https://www.mixamo.com},
+  urldate = {2026-04-05}
+}
+
+@misc{learnopengl_skeletal,
+  author  = {Joey de Vries and {Daniel Souza Mandyk}},
+  title   = {{LearnOpenGL} --- Skeletal Animation},
+  howpublished = {Guest Article},
+  url     = {https://learnopengl.com/Guest-Articles/2020/Skeletal-Animation},
+  urldate = {2026-04-09},
+  note    = {Tutorial followed for the Assimp-side Mixamo workflow: extracting bones and per-vertex four-bone weights from \texttt{aiBone}/\texttt{mWeights}, walking the \texttt{aiNode} hierarchy each frame, sampling \texttt{aiNodeAnim} channels with slerp on rotations, and uploading the resulting \texttt{mat4[MAX\_BONES]} as a uniform consumed by the skinning vertex shader. Basis for \texttt{CAnimatedMesh}.}
+}
+
+@misc{sketchfab,
+  author = {{Sketchfab}},
+  title  = {{Sketchfab} --- 3D Models for {VR/AR/web}},
+  url    = {https://sketchfab.com},
+  urldate = {2026-04-05}
+}
+
+@misc{assimp,
+  author = {{Open Asset Import Library Contributors}},
+  title  = {{Assimp}: Open Asset Import Library},
+  url    = {https://assimp.org},
+  urldate = {2026-04-04}
+}
+
+% ----------------------------------------------------------------------
+% Mesh assets (all from Sketchfab unless noted)
+% ----------------------------------------------------------------------
+
+@online{model_jean,
+  author  = {{Sketchfab}},
+  title   = {Dark Hooded Rogue},
+  url     = {https://sketchfab.com/3d-models/dark-hooded-rogue-7dfc2cee5b334ad082e03dcff0209f53},
+  note    = {Jean le Flambeur character; animations from Mixamo (sit, idle, walk, run, jump)},
+  urldate = {2026-04-05}
+}
+
+@online{model_mieli,
+  author  = {{Sketchfab}},
+  title   = {Sci-Fi Girl v01},
+  url     = {https://sketchfab.com/3d-models/scifi-girl-v01-96340701c2ed4d37851c7d9109eee9c0},
+  note    = {Mieli character; animations from Mixamo (sit-talking, idle, walk, run)},
+  urldate = {2026-04-05}
+}
+
+@online{model_chair,
+  author  = {{Sketchfab}},
+  title   = {Chair},
+  url     = {https://sketchfab.com/3d-models/chair-f9576f11ef0f42abb5562037eccac15d},
+  note    = {Bridge interior armchair},
+  urldate = {2026-04-05}
+}
+
+@online{model_table,
+  author  = {{Sketchfab}},
+  title   = {Geosynth Table},
+  url     = {https://sketchfab.com/3d-models/geosynth-table-699b22ca030d46288ff9f06977b47539},
+  note    = {Bridge interior table},
+  urldate = {2026-04-05}
+}
+
+@online{model_monitor,
+  author  = {{Sketchfab}},
+  title   = {Monitoring Station},
+  url     = {https://sketchfab.com/3d-models/monitoring-station-ff50a8fa75d248ad8580b5e895ecd3d5},
+  note    = {Bridge console (computer\_console.glb)},
+  urldate = {2026-04-05}
+}
+
+@online{model_cruiser,
+  author  = {{Sketchfab}},
+  title   = {Leonidas Class Cruiser},
+  url     = {https://sketchfab.com/3d-models/leonidas-class-cruiser-d086f3789f4b444aa54a8c3ab17a7ab1},
+  note    = {CC Attribution; Sobornost escort cruiser},
+  urldate = {2026-04-06}
+}
+
+@online{model_warmind,
+  author  = {{Sketchfab}},
+  title   = {{UNSC} Infinity},
+  url     = {https://sketchfab.com/3d-models/unsc-infinity-0a4fc6fb48e341f4b4defb3e769054a1},
+  note    = {CC Attribution; Sobornost Founders warmind},
+  urldate = {2026-04-06}
+}
+
+% ----------------------------------------------------------------------
+% Textures and skyboxes
+% ----------------------------------------------------------------------
+
+@online{tex_asteroids,
+  author  = {{Discover Magazine}},
+  title   = {4 Facts About Asteroids You May Not Have Known},
+  url     = {https://www.discovermagazine.com/4-facts-about-asteroids-you-may-not-have-known-43667},
+  note    = {Track / asteroid texture image source},
+  urldate = {2026-03-05}
+}
+
+@online{tex_iridescent,
+  author  = {{iStockphoto}},
+  title   = {Futuristic Gold Hexagonal Texture Background (image ID 1472652067)},
+  url     = {https://www.istockphoto.com/search/2/image-film?phrase=futuristic+gold+hexagonal+texture},
+  note    = {Solar sail iridescent texture; original direct-media URL is no longer publicly served, search page provided instead},
+  urldate = {2026-03-05}
+}
+
+@online{tex_floor_tile,
+  author  = {{SketchUp Texture Club}},
+  title   = {White Ceramic Hexagonal Tile {PBR} Texture Seamless},
+  url     = {https://www.sketchuptextureclub.com/public/texture_m/49-white-ceramic-hexagonal-tile-pbr-texture-seamless.jpg},
+  note    = {Bridge floor tile},
+  urldate = {2026-04-05}
+}
+
+@online{tex_viewport,
+  author  = {{WRIR}},
+  title   = {Spaceship Viewport},
+  url     = {https://www.wrir.org/wp-content/uploads/2022/03/Expanse.jpg},
+  note    = {Bridge viewport texture (front wall space view)},
+  urldate = {2026-04-05}
+}
+
+@online{skybox_milkyway,
+  author  = {{Jungle Jim}},
+  title   = {Deep Space Skybox (16k) with Planets},
+  url     = {https://sketchfab.com/3d-models/sky-pano-milkyway-0016725c047a4ea18cd0b5e5ef2fe441},
+  note    = {CC Attribution; Milky-Way panoramic skybox},
+  urldate = {2026-04-05}
+}
+
+@online{skybox_akimbo,
+  author  = {{Akimbo}},
+  title   = {Skybox Texture (jajdarkland1)},
+  url     = {http://www.akimbo.in/forum/viewtopic.php?f=10&t=9},
+  note    = {Skybox cubemap shipped with the OpenGL template; original akimbo.in forum is now offline, no Wayback Machine snapshot available. Cited for provenance only.},
+  urldate = {2013-01-24}
+}
+
+% ----------------------------------------------------------------------
+% Portraits
+% ----------------------------------------------------------------------
+
+@online{portrait_jean,
+  author  = {Tom Edwards},
+  title   = {The Stranger},
+  url     = {https://www.deviantart.com/tomedwardsconcepts/art/The-Stranger-334851059},
+  note    = {Portrait used for Jean le Flambeur dialogue art},
+  urldate = {2026-04-05}
+}
+
+@online{portrait_perhonen,
+  author  = {{WeShape}},
+  title   = {The Butterfly Metaphor},
+  url     = {https://weshape.tech/2021/05/29/the-butterfly-metaphor/},
+  note    = {Butterfly image used for Perhonen ship-AI portrait},
+  urldate = {2026-04-05}
+}
+
+@online{portrait_pellegrini,
+  author  = {cyberae0n},
+  title   = {Commissioned Work},
+  url     = {https://www.tumblr.com/cyberae0n/633245267827851264},
+  note    = {Portrait used for Pellegrini dialogue art},
+  urldate = {2026-04-05}
+}
+
+% ----------------------------------------------------------------------
+% Music / audio
+% ----------------------------------------------------------------------
+
+@online{music_garote,
+  author  = {{DST}},
+  title   = {Garote},
+  url     = {http://www.nosoapradio.us/},
+  note    = {Royalty-free background music (DST-Garote.mp3); template-shipped, not used in final scene},
+  urldate = {2013-01-24}
+}
+
+@misc{stellaris,
+  author       = {{Paradox Development Studio}},
+  title        = {{Stellaris}},
+  year         = {2016},
+  publisher    = {Paradox Interactive},
+  url          = {https://www.paradoxinteractive.com/games/stellaris},
+  urldate      = {2026-04-15},
+  note         = {Source of the bridge ambience, hologram clicks, sensor / alert / weapon-windup SFX and the militarist / xenophile / xenophobe advisor voice lines (\texttt{atlast\_to\_war.wav}, \texttt{battle\_has\_commenced.wav}, \texttt{battle\_is\_joined.wav}, \texttt{bring\_war\_to\_enemies.wav}, \texttt{conclave\_ready.wav}, \texttt{incoming\_transmission.wav}, \texttt{let\_slip\_the\_dogs.wav}, \texttt{shadows\_sing\_songs.wav}, \texttt{strangegame.wav}, \texttt{trackingunidentifiedobject.wav}, \texttt{bridge1--3.wav}, \texttt{hologram1--3.wav}, \texttt{sensor.wav}, \texttt{alert.wav}, \texttt{warpin.wav}, \texttt{weapondwind.wav}, \texttt{fire1--2.wav}, \texttt{hit.wav}, \texttt{loss.wav}, \texttt{shipflight.wav}, \texttt{gameaudio.mp3}). Used in this academic project under fair-dealing for non-commercial educational purposes; assets remain the property of Paradox Interactive.}
+}
+
+% ----------------------------------------------------------------------
+% Template-provided assets
+% ----------------------------------------------------------------------
+
+@online{model_barrel,
+  author  = {{Psionic Games}},
+  title   = {Barrel Model},
+  url     = {http://www.psionicgames.com/?page_id=24},
+  note    = {Template asset (barrel02.obj) --- not used in final scene},
+  urldate = {2013-01-24}
+}
+
+@online{model_horse,
+  author  = {{OpenGameArt}},
+  title   = {Horse Lowpoly},
+  url     = {http://opengameart.org/content/horse-lowpoly},
+  note    = {Template asset (horse2.obj) --- not used in final scene},
+  urldate = {2013-01-24}
+}
+
+@online{tex_grass,
+  author  = {{Psionic Games}},
+  title   = {Grass Floor Texture},
+  url     = {http://www.psionicgames.com/?page_id=26},
+  note    = {Template terrain textures (grassfloor01.jpg, dirtpile01.jpg)},
+  urldate = {2013-01-24}
+}

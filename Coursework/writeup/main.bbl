@@ -459,6 +459,585 @@
       \verb https://media.istockphoto.com/id/1472652067/nl/foto/futuristic-gold-hexagonal-texture-background-3d-rendering.jpg
       \endverb
     \endentry
+    \entry{model_barrel}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=2e7227afa5ec968ef49fb975d6413ff1}{%
+           family={{Psionic Games}},
+           familyi={P\bibinitperiod}}}%
+      }
+      \strng{namehash}{2e7227afa5ec968ef49fb975d6413ff1}
+      \strng{fullhash}{2e7227afa5ec968ef49fb975d6413ff1}
+      \strng{fullhashraw}{2e7227afa5ec968ef49fb975d6413ff1}
+      \strng{bibnamehash}{2e7227afa5ec968ef49fb975d6413ff1}
+      \strng{authorbibnamehash}{2e7227afa5ec968ef49fb975d6413ff1}
+      \strng{authornamehash}{2e7227afa5ec968ef49fb975d6413ff1}
+      \strng{authorfullhash}{2e7227afa5ec968ef49fb975d6413ff1}
+      \strng{authorfullhashraw}{2e7227afa5ec968ef49fb975d6413ff1}
+      \field{extraname}{1}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{barrel02.obj}
+      \field{title}{Barrel Model}
+      \field{urlday}{24}
+      \field{urlmonth}{1}
+      \field{urlyear}{2013}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb http://www.psionicgames.com/?page_id=24
+      \endverb
+      \verb{url}
+      \verb http://www.psionicgames.com/?page_id=24
+      \endverb
+    \endentry
+    \entry{model_horse}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=7eea860e9ef7cb9e6c6917b4ca2cdac9}{%
+           family={{OpenGameArt}},
+           familyi={O\bibinitperiod}}}%
+      }
+      \strng{namehash}{7eea860e9ef7cb9e6c6917b4ca2cdac9}
+      \strng{fullhash}{7eea860e9ef7cb9e6c6917b4ca2cdac9}
+      \strng{fullhashraw}{7eea860e9ef7cb9e6c6917b4ca2cdac9}
+      \strng{bibnamehash}{7eea860e9ef7cb9e6c6917b4ca2cdac9}
+      \strng{authorbibnamehash}{7eea860e9ef7cb9e6c6917b4ca2cdac9}
+      \strng{authornamehash}{7eea860e9ef7cb9e6c6917b4ca2cdac9}
+      \strng{authorfullhash}{7eea860e9ef7cb9e6c6917b4ca2cdac9}
+      \strng{authorfullhashraw}{7eea860e9ef7cb9e6c6917b4ca2cdac9}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{horse2.obj}
+      \field{title}{Horse Lowpoly}
+      \field{urlday}{24}
+      \field{urlmonth}{1}
+      \field{urlyear}{2013}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb http://opengameart.org/content/horse-lowpoly
+      \endverb
+      \verb{url}
+      \verb http://opengameart.org/content/horse-lowpoly
+      \endverb
+    \endentry
+    \entry{tex_grass}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=2e7227afa5ec968ef49fb975d6413ff1}{%
+           family={{Psionic Games}},
+           familyi={P\bibinitperiod}}}%
+      }
+      \strng{namehash}{2e7227afa5ec968ef49fb975d6413ff1}
+      \strng{fullhash}{2e7227afa5ec968ef49fb975d6413ff1}
+      \strng{fullhashraw}{2e7227afa5ec968ef49fb975d6413ff1}
+      \strng{bibnamehash}{2e7227afa5ec968ef49fb975d6413ff1}
+      \strng{authorbibnamehash}{2e7227afa5ec968ef49fb975d6413ff1}
+      \strng{authornamehash}{2e7227afa5ec968ef49fb975d6413ff1}
+      \strng{authorfullhash}{2e7227afa5ec968ef49fb975d6413ff1}
+      \strng{authorfullhashraw}{2e7227afa5ec968ef49fb975d6413ff1}
+      \field{extraname}{2}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{grassfloor01.jpg, dirtpile01.jpg terrain textures}
+      \field{title}{Grass Floor Texture}
+      \field{urlday}{24}
+      \field{urlmonth}{1}
+      \field{urlyear}{2013}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb http://www.psionicgames.com/?page_id=26
+      \endverb
+      \verb{url}
+      \verb http://www.psionicgames.com/?page_id=26
+      \endverb
+    \endentry
+    \entry{skybox_akimbo}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=c94918979e792577836805b0207ecd0a}{%
+           family={{Akimbo}},
+           familyi={A\bibinitperiod}}}%
+      }
+      \strng{namehash}{c94918979e792577836805b0207ecd0a}
+      \strng{fullhash}{c94918979e792577836805b0207ecd0a}
+      \strng{fullhashraw}{c94918979e792577836805b0207ecd0a}
+      \strng{bibnamehash}{c94918979e792577836805b0207ecd0a}
+      \strng{authorbibnamehash}{c94918979e792577836805b0207ecd0a}
+      \strng{authornamehash}{c94918979e792577836805b0207ecd0a}
+      \strng{authorfullhash}{c94918979e792577836805b0207ecd0a}
+      \strng{authorfullhashraw}{c94918979e792577836805b0207ecd0a}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Space skybox cubemap}
+      \field{title}{Skybox Texture}
+      \true{nocite}
+      \verb{urlraw}
+      \verb http://www.akimbo.in/forum/viewtopic.php?f=10&t=9
+      \endverb
+      \verb{url}
+      \verb http://www.akimbo.in/forum/viewtopic.php?f=10&t=9
+      \endverb
+    \endentry
+    \entry{music_garote}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=5b47da8ed8e362f539d8f37442aac301}{%
+           family={{DST}},
+           familyi={D\bibinitperiod}}}%
+      }
+      \strng{namehash}{5b47da8ed8e362f539d8f37442aac301}
+      \strng{fullhash}{5b47da8ed8e362f539d8f37442aac301}
+      \strng{fullhashraw}{5b47da8ed8e362f539d8f37442aac301}
+      \strng{bibnamehash}{5b47da8ed8e362f539d8f37442aac301}
+      \strng{authorbibnamehash}{5b47da8ed8e362f539d8f37442aac301}
+      \strng{authornamehash}{5b47da8ed8e362f539d8f37442aac301}
+      \strng{authorfullhash}{5b47da8ed8e362f539d8f37442aac301}
+      \strng{authorfullhashraw}{5b47da8ed8e362f539d8f37442aac301}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Royalty-free background music (DST-Garote.mp3)}
+      \field{title}{Garote}
+      \true{nocite}
+      \verb{urlraw}
+      \verb http://www.nosoapradio.us/
+      \endverb
+      \verb{url}
+      \verb http://www.nosoapradio.us/
+      \endverb
+    \endentry
+    \entry{model_chair}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=077eded73f9415a9b5b6c938afeffe08}{%
+           family={{Sketchfab}},
+           familyi={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{fullhash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{fullhashraw}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{bibnamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorbibnamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authornamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorfullhash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorfullhashraw}{077eded73f9415a9b5b6c938afeffe08}
+      \field{extraname}{1}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Bridge interior armchair model}
+      \field{title}{Chair}
+      \field{urlday}{5}
+      \field{urlmonth}{4}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://sketchfab.com/3d-models/chair-f9576f11ef0f42abb5562037eccac15d
+      \endverb
+      \verb{url}
+      \verb https://sketchfab.com/3d-models/chair-f9576f11ef0f42abb5562037eccac15d
+      \endverb
+    \endentry
+    \entry{model_monitor}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=077eded73f9415a9b5b6c938afeffe08}{%
+           family={{Sketchfab}},
+           familyi={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{fullhash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{fullhashraw}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{bibnamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorbibnamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authornamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorfullhash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorfullhashraw}{077eded73f9415a9b5b6c938afeffe08}
+      \field{extraname}{2}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Bridge console model}
+      \field{title}{Monitoring Station}
+      \field{urlday}{5}
+      \field{urlmonth}{4}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://sketchfab.com/3d-models/monitoring-station-ff50a8fa75d248ad8580b5e895ecd3d5
+      \endverb
+      \verb{url}
+      \verb https://sketchfab.com/3d-models/monitoring-station-ff50a8fa75d248ad8580b5e895ecd3d5
+      \endverb
+    \endentry
+    \entry{model_table}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=077eded73f9415a9b5b6c938afeffe08}{%
+           family={{Sketchfab}},
+           familyi={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{fullhash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{fullhashraw}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{bibnamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorbibnamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authornamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorfullhash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorfullhashraw}{077eded73f9415a9b5b6c938afeffe08}
+      \field{extraname}{3}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Bridge interior table model}
+      \field{title}{Geosynth Table}
+      \field{urlday}{5}
+      \field{urlmonth}{4}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://sketchfab.com/3d-models/geosynth-table-699b22ca030d46288ff9f06977b47539
+      \endverb
+      \verb{url}
+      \verb https://sketchfab.com/3d-models/geosynth-table-699b22ca030d46288ff9f06977b47539
+      \endverb
+    \endentry
+    \entry{model_jean}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=077eded73f9415a9b5b6c938afeffe08}{%
+           family={{Sketchfab}},
+           familyi={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{fullhash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{fullhashraw}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{bibnamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorbibnamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authornamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorfullhash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorfullhashraw}{077eded73f9415a9b5b6c938afeffe08}
+      \field{extraname}{4}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Jean le Flambeur character model; animations from Mixamo (sit, idle, walk, run, jump)}
+      \field{title}{Dark Hooded Rogue}
+      \field{urlday}{5}
+      \field{urlmonth}{4}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://sketchfab.com/3d-models/dark-hooded-rogue-7dfc2cee5b334ad082e03dcff0209f53
+      \endverb
+      \verb{url}
+      \verb https://sketchfab.com/3d-models/dark-hooded-rogue-7dfc2cee5b334ad082e03dcff0209f53
+      \endverb
+    \endentry
+    \entry{model_mieli}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=077eded73f9415a9b5b6c938afeffe08}{%
+           family={{Sketchfab}},
+           familyi={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{fullhash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{fullhashraw}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{bibnamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorbibnamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authornamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorfullhash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorfullhashraw}{077eded73f9415a9b5b6c938afeffe08}
+      \field{extraname}{5}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Mieli character model; animations from Mixamo (sitting talking, idle, walk, run)}
+      \field{title}{Sci-Fi Girl v01}
+      \field{urlday}{5}
+      \field{urlmonth}{4}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://sketchfab.com/3d-models/scifi-girl-v01-96340701c2ed4d37851c7d9109eee9c0
+      \endverb
+      \verb{url}
+      \verb https://sketchfab.com/3d-models/scifi-girl-v01-96340701c2ed4d37851c7d9109eee9c0
+      \endverb
+    \endentry
+    \entry{tex_viewport}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=01b36b997f3e226f3ac36b6de98e7d78}{%
+           family={{WRIR}},
+           familyi={W\bibinitperiod}}}%
+      }
+      \strng{namehash}{01b36b997f3e226f3ac36b6de98e7d78}
+      \strng{fullhash}{01b36b997f3e226f3ac36b6de98e7d78}
+      \strng{fullhashraw}{01b36b997f3e226f3ac36b6de98e7d78}
+      \strng{bibnamehash}{01b36b997f3e226f3ac36b6de98e7d78}
+      \strng{authorbibnamehash}{01b36b997f3e226f3ac36b6de98e7d78}
+      \strng{authornamehash}{01b36b997f3e226f3ac36b6de98e7d78}
+      \strng{authorfullhash}{01b36b997f3e226f3ac36b6de98e7d78}
+      \strng{authorfullhashraw}{01b36b997f3e226f3ac36b6de98e7d78}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Bridge viewport texture (front wall space view)}
+      \field{title}{The Expanse --- Spaceship Viewport}
+      \field{urlday}{5}
+      \field{urlmonth}{4}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://www.wrir.org/wp-content/uploads/2022/03/Expanse.jpg
+      \endverb
+      \verb{url}
+      \verb https://www.wrir.org/wp-content/uploads/2022/03/Expanse.jpg
+      \endverb
+    \endentry
+    \entry{tex_floor_tile}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=d3968283e3f54b07fc9a5495ef4d5f1c}{%
+           family={{SketchUp Texture Club}},
+           familyi={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{d3968283e3f54b07fc9a5495ef4d5f1c}
+      \strng{fullhash}{d3968283e3f54b07fc9a5495ef4d5f1c}
+      \strng{fullhashraw}{d3968283e3f54b07fc9a5495ef4d5f1c}
+      \strng{bibnamehash}{d3968283e3f54b07fc9a5495ef4d5f1c}
+      \strng{authorbibnamehash}{d3968283e3f54b07fc9a5495ef4d5f1c}
+      \strng{authornamehash}{d3968283e3f54b07fc9a5495ef4d5f1c}
+      \strng{authorfullhash}{d3968283e3f54b07fc9a5495ef4d5f1c}
+      \strng{authorfullhashraw}{d3968283e3f54b07fc9a5495ef4d5f1c}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Bridge floor tile texture}
+      \field{title}{White Ceramic Hexagonal Tile PBR Texture Seamless}
+      \field{urlday}{5}
+      \field{urlmonth}{4}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://www.sketchuptextureclub.com/public/texture_m/49-white-ceramic-hexagonal-tile-pbr-texture-seamless.jpg
+      \endverb
+      \verb{url}
+      \verb https://www.sketchuptextureclub.com/public/texture_m/49-white-ceramic-hexagonal-tile-pbr-texture-seamless.jpg
+      \endverb
+    \endentry
+    \entry{portrait_jean}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=da25097faea0d88e52c9401817395d55}{%
+           family={Edwards},
+           familyi={E\bibinitperiod},
+           given={Tom},
+           giveni={T\bibinitperiod}}}%
+      }
+      \strng{namehash}{da25097faea0d88e52c9401817395d55}
+      \strng{fullhash}{da25097faea0d88e52c9401817395d55}
+      \strng{fullhashraw}{da25097faea0d88e52c9401817395d55}
+      \strng{bibnamehash}{da25097faea0d88e52c9401817395d55}
+      \strng{authorbibnamehash}{da25097faea0d88e52c9401817395d55}
+      \strng{authornamehash}{da25097faea0d88e52c9401817395d55}
+      \strng{authorfullhash}{da25097faea0d88e52c9401817395d55}
+      \strng{authorfullhashraw}{da25097faea0d88e52c9401817395d55}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Portrait used for Jean le Flambeur dialogue character art}
+      \field{title}{The Stranger}
+      \field{urlday}{5}
+      \field{urlmonth}{4}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://www.deviantart.com/tomedwardsconcepts/art/The-Stranger-334851059
+      \endverb
+      \verb{url}
+      \verb https://www.deviantart.com/tomedwardsconcepts/art/The-Stranger-334851059
+      \endverb
+    \endentry
+    \entry{skybox_milkyway}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=9e2c00521920035fffdd54fe923fd783}{%
+           family={{Jungle Jim}},
+           familyi={J\bibinitperiod}}}%
+      }
+      \strng{namehash}{9e2c00521920035fffdd54fe923fd783}
+      \strng{fullhash}{9e2c00521920035fffdd54fe923fd783}
+      \strng{fullhashraw}{9e2c00521920035fffdd54fe923fd783}
+      \strng{bibnamehash}{9e2c00521920035fffdd54fe923fd783}
+      \strng{authorbibnamehash}{9e2c00521920035fffdd54fe923fd783}
+      \strng{authornamehash}{9e2c00521920035fffdd54fe923fd783}
+      \strng{authorfullhash}{9e2c00521920035fffdd54fe923fd783}
+      \strng{authorfullhashraw}{9e2c00521920035fffdd54fe923fd783}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{CC Attribution; milkyway panoramic skybox for exterior Sobornost scene}
+      \field{title}{Deep Space Skybox (16k) with Planets}
+      \field{urlday}{5}
+      \field{urlmonth}{4}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://sketchfab.com/3d-models/sky-pano-milkyway-0016725c047a4ea18cd0b5e5ef2fe441
+      \endverb
+      \verb{url}
+      \verb https://sketchfab.com/3d-models/sky-pano-milkyway-0016725c047a4ea18cd0b5e5ef2fe441
+      \endverb
+    \endentry
+    \entry{model_cruiser}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=077eded73f9415a9b5b6c938afeffe08}{%
+           family={{Sketchfab}},
+           familyi={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{fullhash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{fullhashraw}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{bibnamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorbibnamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authornamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorfullhash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorfullhashraw}{077eded73f9415a9b5b6c938afeffe08}
+      \field{extraname}{6}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{CC Attribution; Sobornost escort cruiser model}
+      \field{title}{Leonidas Class Cruiser}
+      \field{urlday}{6}
+      \field{urlmonth}{4}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://sketchfab.com/3d-models/leonidas-class-cruiser-d086f3789f4b444aa54a8c3ab17a7ab1
+      \endverb
+      \verb{url}
+      \verb https://sketchfab.com/3d-models/leonidas-class-cruiser-d086f3789f4b444aa54a8c3ab17a7ab1
+      \endverb
+    \endentry
+    \entry{model_warmind}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=077eded73f9415a9b5b6c938afeffe08}{%
+           family={{Sketchfab}},
+           familyi={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{fullhash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{fullhashraw}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{bibnamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorbibnamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authornamehash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorfullhash}{077eded73f9415a9b5b6c938afeffe08}
+      \strng{authorfullhashraw}{077eded73f9415a9b5b6c938afeffe08}
+      \field{extraname}{7}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{CC Attribution; Sobornost Founders warship model}
+      \field{title}{{UNSC} Infinity}
+      \field{urlday}{6}
+      \field{urlmonth}{4}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://sketchfab.com/3d-models/unsc-infinity-0a4fc6fb48e341f4b4defb3e769054a1
+      \endverb
+      \verb{url}
+      \verb https://sketchfab.com/3d-models/unsc-infinity-0a4fc6fb48e341f4b4defb3e769054a1
+      \endverb
+    \endentry
+    \entry{portrait_perhonen}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=e92e64fee34c0c059e44787c109baae3}{%
+           family={{WeShape}},
+           familyi={W\bibinitperiod}}}%
+      }
+      \strng{namehash}{e92e64fee34c0c059e44787c109baae3}
+      \strng{fullhash}{e92e64fee34c0c059e44787c109baae3}
+      \strng{fullhashraw}{e92e64fee34c0c059e44787c109baae3}
+      \strng{bibnamehash}{e92e64fee34c0c059e44787c109baae3}
+      \strng{authorbibnamehash}{e92e64fee34c0c059e44787c109baae3}
+      \strng{authornamehash}{e92e64fee34c0c059e44787c109baae3}
+      \strng{authorfullhash}{e92e64fee34c0c059e44787c109baae3}
+      \strng{authorfullhashraw}{e92e64fee34c0c059e44787c109baae3}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Butterfly image used as Perhonen ship AI portrait}
+      \field{title}{The Butterfly Metaphor}
+      \field{urlday}{5}
+      \field{urlmonth}{4}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://weshape.tech/2021/05/29/the-butterfly-metaphor/
+      \endverb
+      \verb{url}
+      \verb https://weshape.tech/2021/05/29/the-butterfly-metaphor/
+      \endverb
+    \endentry
+    \entry{portrait_pellegrini}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=98de081ebb2f3a4a553a8eb5625f1835}{%
+           family={cyberae0n},
+           familyi={c\bibinitperiod}}}%
+      }
+      \strng{namehash}{98de081ebb2f3a4a553a8eb5625f1835}
+      \strng{fullhash}{98de081ebb2f3a4a553a8eb5625f1835}
+      \strng{fullhashraw}{98de081ebb2f3a4a553a8eb5625f1835}
+      \strng{bibnamehash}{98de081ebb2f3a4a553a8eb5625f1835}
+      \strng{authorbibnamehash}{98de081ebb2f3a4a553a8eb5625f1835}
+      \strng{authornamehash}{98de081ebb2f3a4a553a8eb5625f1835}
+      \strng{authorfullhash}{98de081ebb2f3a4a553a8eb5625f1835}
+      \strng{authorfullhashraw}{98de081ebb2f3a4a553a8eb5625f1835}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Portrait used for Pellegrini dialogue character art}
+      \field{title}{Commissioned Work}
+      \field{urlday}{5}
+      \field{urlmonth}{4}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://www.tumblr.com/cyberae0n/633245267827851264
+      \endverb
+      \verb{url}
+      \verb https://www.tumblr.com/cyberae0n/633245267827851264
+      \endverb
+    \endentry
   \enddatalist
 \endrefsection
 \endinput

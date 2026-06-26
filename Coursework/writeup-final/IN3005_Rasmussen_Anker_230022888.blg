@@ -1,0 +1,15 @@
+[0] Config.pm:328> INFO - This is Biber 2.21
+[0] Config.pm:331> INFO - Logfile is 'IN3005_Rasmussen_Anker_230022888.blg'
+[25] biber:342> INFO - === Sun May 10, 2026, 15:55:42
+[32] Biber.pm:421> INFO - Reading 'IN3005_Rasmussen_Anker_230022888.bcf'
+[60] Biber.pm:1002> INFO - Found 51 citekeys in bib section 0
+[68] Biber.pm:4487> INFO - Processing section 0
+[73] Biber.pm:4678> INFO - Looking for bibtex file 'refs.bib' for section 0
+[74] bibtex.pm:1713> INFO - LaTeX decoding ...
+[89] bibtex.pm:1519> INFO - Found BibTeX data source 'refs.bib'
+[221] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[221] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[221] Biber.pm:4307> INFO - Sorting list 'none/global//global/global/global' of type 'entry' with template 'none' and locale 'en-US'
+[221] Biber.pm:4313> INFO - No sort tailoring available for locale 'en-US'
+[235] bbl.pm:676> INFO - Writing 'IN3005_Rasmussen_Anker_230022888.bbl' with encoding 'UTF-8'
+[246] bbl.pm:779> INFO - Output to IN3005_Rasmussen_Anker_230022888.bbl
