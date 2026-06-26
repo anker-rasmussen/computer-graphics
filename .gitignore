@@ -42,8 +42,7 @@ Labs/Lab4Demo/OpenGLTemplate/Debug/
 Labs/Lab4Demo/OpenGLTemplate/Release/
 Labs/Lab4Demo/OpenGLTemplate/lib/
 
-# Oversized binary assets (exceed GitHub 100 MB limit)
-Coursework/Template2026/OpenGLTemplate/resources/models/Mieli/mieli.obj
+# Oversized binary assets (exceed GitHub 100 MB hard limit)
 Coursework/rigmieli_reduced.blend
 coursework_submission.zip
 notes.md
